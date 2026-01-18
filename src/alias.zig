@@ -97,10 +97,11 @@ pub fn readAliasFile(allocator: std.mem.Allocator, io: std.Io) ArrayList(Alias) 
 }
 
 test "readAliasFile" {
-    const page_allocator = std.heap.page_allocator;
+    const allocator = std.testing.allocator;
+    const io = std.testing.io;
 
-    var alias_list = readAliasFile(page_allocator);
-    defer alias_list.deinit(page_allocator);
+    var alias_list = readAliasFile(allocator, io);
+    defer alias_list.deinit(allocator);
 
     try std.testing.expect(alias_list.items.len >= 1);
 
@@ -136,14 +137,12 @@ pub fn writeAliasFile(allocator: std.mem.Allocator, io: std.Io, alias_list: Arra
 }
 
 test "writeAliasFile" {
-    var da = std.heap.DebugAllocator(.{}){};
-    defer _ = da.deinit();
-    const gpa = da.allocator();
+    const allocator = std.testing.allocator;
+    const io = std.testing.io;
 
-    var alias_list = getExampleAliasList(gpa);
-    defer alias_list.deinit(gpa);
-
-    writeAliasFile(gpa, alias_list);
+    var alias_list = getExampleAliasList(allocator);
+    defer alias_list.deinit(allocator);
+    writeAliasFile(allocator, io, alias_list);
 }
 
 /// Computes the absolute path to the alias file in the same directory as the executable.
@@ -166,12 +165,11 @@ pub fn getAliasFilePath(allocator: std.mem.Allocator, io: std.Io) []u8 {
 }
 
 test "getAliasFilePath" {
-    var da = std.heap.DebugAllocator(.{}){};
-    defer _ = da.deinit();
-    const gpa = da.allocator();
+    const allocator = std.testing.allocator;
+    const io = std.testing.io;
 
-    const file_path = getAliasFilePath(gpa);
-    defer gpa.free(file_path);
+    const file_path = getAliasFilePath(allocator, io);
+    defer allocator.free(file_path);
 
     std.log.info("Alias file path: {s}\n", .{file_path});
 }
@@ -190,9 +188,8 @@ pub fn aliasFileExists(allocator: std.mem.Allocator, io: std.Io) bool {
 }
 
 test "aliasFileExists" {
-    var da = std.heap.DebugAllocator(.{}){};
-    defer _ = da.deinit();
-    const gpa = da.allocator();
+    const allocator = std.testing.allocator;
+    const io = std.testing.io;
 
-    _ = aliasFileExists(gpa);
+    _ = aliasFileExists(allocator, io);
 }

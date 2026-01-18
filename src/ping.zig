@@ -45,11 +45,10 @@ pub fn ping_with_os_command(allocator: std.mem.Allocator, io: std.Io, fqdn: []co
 }
 
 test "ping_with_os_command" {
-    var da = std.heap.DebugAllocator(.{}){};
-    defer _ = da.deinit();
-    const gpa = da.allocator();
+    const allocator = std.testing.allocator;
+    const io = std.testing.io;
 
-    try std.testing.expectEqual(true, try ping_with_os_command(gpa, "127.0.0.1"));
-    try std.testing.expectEqual(true, try ping_with_os_command(gpa, "localhost"));
-    try std.testing.expectEqual(false, try ping_with_os_command(gpa, "256.256.256.256"));
+    try std.testing.expectEqual(true, try ping_with_os_command(allocator, io, "127.0.0.1"));
+    try std.testing.expectEqual(true, try ping_with_os_command(allocator, io, "localhost"));
+    try std.testing.expectEqual(false, try ping_with_os_command(allocator, io, "256.256.256.256"));
 }
