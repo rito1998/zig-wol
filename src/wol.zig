@@ -78,44 +78,47 @@ pub fn generate_magic_packet(mac_bytes: [6]u8) [102]u8 {
 
 /// Broadcasts a magic packet to wake up a device with the specified MAC address.
 pub fn broadcast_magic_packet_ipv4(io: std.Io, mac: []const u8, port: ?u16, broadcast: ?[]const u8, count: ?u8) !void {
-    std.log.err("UDP networking for magic packet not yet implemented for zig 0.16-master.", .{});
-
-    _ = io; // currently unused
-
     // Defaults
     const actual_port = port orelse 9;
-    const actual_broadcast = try std.Io.net.IpAddress.parse(broadcast orelse "255.255.255.255", actual_port);
-    _ = actual_broadcast; // currently unused
+    const actual_broadcast = std.Io.net.IpAddress.parse(broadcast orelse "255.255.255.255", actual_port) catch |err| {
+        std.log.err("Invalid broadcast address: {}", .{err});
+        return err;
+    };
     const actual_count = count orelse 3; // how man times the magic packet is sent
-    _ = actual_count; // currently unused
 
     const mac_bytes = parse_mac(mac) catch |err| {
-        std.log.err("Invalid MAC address: {}\n", .{err});
+        std.log.err("Invalid MAC address: {}", .{err});
         return err;
     };
     const magic_packet = generate_magic_packet(mac_bytes);
-    _ = magic_packet; // currently unused
 
-    // // Create a UDP socket
-    // const socket = try posix.socket(posix.AF.INET, posix.SOCK.DGRAM, posix.IPPROTO.UDP);
-    // defer posix.close(socket);
+    // Create a UDP socket
+    const localhost = std.Io.net.IpAddress.parse("0.0.0.0", 0) catch {
+        std.log.err("Failed to parse localhost address.", .{});
+        return error.InvalidAddress;
+    };
+    const socket = std.Io.net.IpAddress.bind(&localhost, io, .{ .mode = .dgram, .protocol = .udp }) catch |err| {
+        std.log.err("Failed to bind UDP socket: {}", .{err});
+        return err;
+    };
+    defer socket.close(io);
 
-    // // Enable socket broadcast (setting SO_BROADCAST to anything othen than empty string enables broadcast)
-    // const option_value: u32 = 1;
-    // posix.setsockopt(socket, posix.SOL.SOCKET, posix.SO.BROADCAST, std.mem.asBytes(&option_value)) catch |err| {
-    //     std.log.err("Failed to set socket option to enable broadcast: {}\n", .{err});
-    //     return err;
-    // ;
+    // Enable socket broadcast (setting SO_BROADCAST to anything othen than empty string enables broadcast)
+    const option_value: u32 = 1;
+    posix.setsockopt(socket.handle, posix.SOL.SOCKET, posix.SO.BROADCAST, std.mem.asBytes(&option_value)) catch |err| {
+        std.log.err("Failed to set socket option to enable broadcast: {}", .{err});
+        return err;
+    };
 
-    // // Send the magic packet
-    // for (0..actual_count) |_| {
-    //     _ = posix.sendto(socket, &magic_packet, 0, &actual_broadcast.any, actual_broadcast.getOsSockLen()) catch |err| {
-    //         std.log.err("Failed to send to the provided address {f}.\n", .{actual_broadcast.in});
-    //         return err;
-    //     };
-    // }
+    // Send the magic packet
+    for (0..actual_count) |_| {
+        socket.send(io, &actual_broadcast, &magic_packet) catch |err| {
+            std.log.err("Failed to send to the provided address {f}.", .{actual_broadcast.ip4});
+            return err;
+        };
+    }
 
-    // std.log.info("Sent {d} magic packet to target MAC {s} via {f}/udp.\n", .{ actual_count, mac, actual_broadcast.in });
+    std.log.info("Sent {d} magic packet to target MAC {s} via {f}/udp.", .{ actual_count, mac, actual_broadcast.ip4 });
 }
 
 /// Checks if a sequence is a valid magic packet: 6 bytes of 0xFF followed by the MAC address bytes repeated 16 times.
