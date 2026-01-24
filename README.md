@@ -103,10 +103,14 @@ const wol_module = b.dependency("wol", .{}).module("wol");
 exe.root_module.addImport("wol", wol_module); // e.g. add it to an exe
 ```
 
-Import the module in Zig.
+Import the module and broadcast a magic packet.
 
 ```c
 const wol = @import("wol");
+
+pub fn main(init: std.process.Init) !void {
+    try wol.broadcast_magic_packet_ipv4(init.io, "11-22-33-44-55-66", 10, "255.255.255.255", 1);
+}
 ```
 
 ## Remote wake-on-lan
