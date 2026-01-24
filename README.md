@@ -90,16 +90,16 @@ It is possible to use the wake-on-lan functionality of this project as a library
 zig fetch --save=wol git+https://github.com/rktr1998/zig-wol
 ```
 
-Add the wol module from the fetched dependency in build.zig.
+Add the wol module from the fetched dependency in `build.zig`.
 
-```c
+```zig
 const wol_module = b.dependency("wol", .{}).module("wol");
-exe.root_module.addImport("wol", wol_module); // e.g. add it to an exe
+exe.root_module.addImport("wol", wol_module); // e.g. add it to an exe root module
 ```
 
-Import the module and broadcast a magic packet.
+Import the module in `main.zig` and broadcast a magic packet.
 
-```c
+```zig
 const wol = @import("wol");
 
 pub fn main(init: std.process.Init) !void {
