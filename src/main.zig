@@ -1,10 +1,14 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const build_zig_zon = @import("build_zig_zon");
-const clap = @import("clap"); // third-party lib for cmd line args parsing
-const wol = @import("wol"); // local module
-const alias = @import("alias.zig"); // local src file
+const clap = @import("clap");
+const wol = @import("wol.zig");
+const alias = @import("alias.zig");
 const ping = @import("ping.zig");
+
+const debug = std.debug;
+const Allocator = std.mem.Allocator;
+const Io = std.Io;
 
 const SubCommands = enum {
     wake,
@@ -62,7 +66,7 @@ pub fn main(init: std.process.Init) !void {
     }
 }
 
-fn subCommandWake(allocator: std.mem.Allocator, io: std.Io, iter: *std.process.Args.Iterator, main_args: MainArgs) !void {
+fn subCommandWake(allocator: Allocator, io: Io, iter: *std.process.Args.Iterator, main_args: MainArgs) !void {
     _ = main_args;
 
     const params = comptime clap.parseParamsComptime(
@@ -86,7 +90,7 @@ fn subCommandWake(allocator: std.mem.Allocator, io: std.Io, iter: *std.process.A
     const help_message = "Provide a MAC or an alias name. Usage: zig-wol wake <MAC or ALIAS> [options]\n";
 
     if (res.args.help != 0)
-        return std.debug.print("{s}", .{help_message});
+        return debug.print("{s}", .{help_message});
 
     // if --all is provided, wake up all devices in the alias list
     if (res.args.all != 0) {
@@ -95,12 +99,12 @@ fn subCommandWake(allocator: std.mem.Allocator, io: std.Io, iter: *std.process.A
 
         for (alias_list.items) |item| {
             try wol.broadcast_magic_packet_ipv4(io, item.mac, item.port, item.broadcast, null);
-            try std.Io.sleep(io, .fromMilliseconds(100), .real); // sleep between packets
+            try Io.sleep(io, .fromMilliseconds(100), .real); // sleep between packets
         }
         return;
     }
 
-    const mac = res.positionals[0] orelse return std.debug.print("{s}", .{help_message});
+    const mac = res.positionals[0] orelse return debug.print("{s}", .{help_message});
 
     if (wol.is_mac_valid(mac)) {
         return try wol.broadcast_magic_packet_ipv4(io, mac, res.args.port, res.args.broadcast, null);
@@ -116,11 +120,11 @@ fn subCommandWake(allocator: std.mem.Allocator, io: std.Io, iter: *std.process.A
             }
         }
 
-        std.debug.print("Provided argument {s} is neither a valid MAC nor an existing alias name.\n", .{mac});
+        debug.print("Provided argument {s} is neither a valid MAC nor an existing alias name.\n", .{mac});
     }
 }
 
-fn subCommandStatus(allocator: std.mem.Allocator, io: std.Io, iter: *std.process.Args.Iterator, main_args: MainArgs) !void {
+fn subCommandStatus(allocator: Allocator, io: Io, iter: *std.process.Args.Iterator, main_args: MainArgs) !void {
     _ = main_args;
 
     const params = comptime clap.parseParamsComptime(
@@ -144,7 +148,7 @@ fn subCommandStatus(allocator: std.mem.Allocator, io: std.Io, iter: *std.process
     ;
 
     if (res.args.help != 0)
-        return std.debug.print("{s}", .{help_message});
+        return debug.print("{s}", .{help_message});
 
     const is_status_live = res.args.live != 0;
 
@@ -179,8 +183,7 @@ fn subCommandStatus(allocator: std.mem.Allocator, io: std.Io, iter: *std.process
             _ = thread.detach();
         }
     } else {
-        // in non-live mode ("single shot ping") wait for all threads to finish.
-        // a join here is necessary otherwise the first (and only) ping to all machines may not be completed when we print the status and exit
+        // in non-live mode (one ping only) wait for all threads to finish.
         for (threads) |thread| {
             _ = thread.join();
         }
@@ -216,23 +219,23 @@ fn subCommandStatus(allocator: std.mem.Allocator, io: std.Io, iter: *std.process
     while (true) {
         // reset the cursor to the top left before reprinting all lines
         if (res.args.live != 0 and idx != 0) {
-            std.debug.print("\u{1B}[{d}A\r", .{alias_list.items.len});
+            debug.print("\u{1B}[{d}A\r", .{alias_list.items.len});
         }
 
         // while accessing the results array to print the status, lock the mutex
         mutex.lock();
         for (alias_list.items, 0..) |item, i| {
             if (is_alive_array[i]) {
-                std.debug.print("{s}  {s}\n", .{ status_indicator_online, item.name });
+                debug.print("{s}  {s}\n", .{ status_indicator_online, item.name });
             } else {
-                std.debug.print("{s}  {s}\n", .{ status_indicator_offline, item.name });
+                debug.print("{s}  {s}\n", .{ status_indicator_offline, item.name });
             }
         }
         mutex.unlock();
 
         if (is_status_live) {
             // sleep between each console update
-            try std.Io.sleep(io, .fromSeconds(1), .real);
+            try Io.sleep(io, .fromSeconds(1), .real);
         } else {
             break;
         }
@@ -240,7 +243,7 @@ fn subCommandStatus(allocator: std.mem.Allocator, io: std.Io, iter: *std.process
     }
 }
 
-fn subCommandAlias(allocator: std.mem.Allocator, io: std.Io, iter: *std.process.Args.Iterator, main_args: MainArgs) !void {
+fn subCommandAlias(allocator: Allocator, io: Io, iter: *std.process.Args.Iterator, main_args: MainArgs) !void {
     _ = main_args;
 
     const params = comptime clap.parseParamsComptime(
@@ -263,15 +266,15 @@ fn subCommandAlias(allocator: std.mem.Allocator, io: std.Io, iter: *std.process.
     };
     defer res.deinit();
 
-    const name = res.positionals[0] orelse return std.debug.print("Provide name and MAC for the new alias. Usage: zig-wol alias <NAME> <MAC>\n", .{});
-    const mac = res.positionals[1] orelse return std.debug.print("Provide a MAC. Usage: zig-wol alias <NAME> <MAC>\n", .{});
+    const name = res.positionals[0] orelse return debug.print("Provide name and MAC for the new alias. Usage: zig-wol alias <NAME> <MAC>\n", .{});
+    const mac = res.positionals[1] orelse return debug.print("Provide a MAC. Usage: zig-wol alias <NAME> <MAC>\n", .{});
     const broadcast = res.args.broadcast orelse "255.255.255.255";
     const port = res.args.port orelse 9;
     const fqdn = res.args.fqdn orelse "";
     const description = res.args.description orelse "";
 
     _ = wol.parse_mac(mac) catch |err| {
-        return std.debug.print("Invalid MAC: {}\n", .{err});
+        return debug.print("Invalid MAC: {}\n", .{err});
     };
 
     // get config from file, add alias and save config to file
@@ -281,7 +284,7 @@ fn subCommandAlias(allocator: std.mem.Allocator, io: std.Io, iter: *std.process.
     // check if alias already exists
     for (alias_list.items) |item| {
         if (std.mem.eql(u8, item.name, name)) {
-            return std.debug.print("Failed to add alias: name already exists.", .{});
+            return debug.print("Failed to add alias: name already exists.", .{});
         }
     }
 
@@ -293,14 +296,14 @@ fn subCommandAlias(allocator: std.mem.Allocator, io: std.Io, iter: *std.process.
         .fqdn = fqdn,
         .description = description,
     }) catch |err| {
-        return std.debug.print("Failed to add alias: {}\n", .{err});
+        return debug.print("Failed to add alias: {}\n", .{err});
     };
     alias.writeAliasFile(allocator, io, alias_list);
 
-    std.debug.print("Alias added.\n", .{});
+    debug.print("Alias added.\n", .{});
 }
 
-fn subCommandRemove(allocator: std.mem.Allocator, io: std.Io, iter: *std.process.Args.Iterator, main_args: MainArgs) !void {
+fn subCommandRemove(allocator: Allocator, io: Io, iter: *std.process.Args.Iterator, main_args: MainArgs) !void {
     _ = main_args;
 
     const params = comptime clap.parseParamsComptime(
@@ -329,14 +332,14 @@ fn subCommandRemove(allocator: std.mem.Allocator, io: std.Io, iter: *std.process
 
         alias_list.clearAndFree(allocator);
         alias.writeAliasFile(allocator, io, alias_list);
-        std.debug.print("Removed {d} aliases.\n", .{alias_count});
+        debug.print("Removed {d} aliases.\n", .{alias_count});
         return;
     }
 
     // if name len is 0 or --help is provided, print help message
     if (name.len == 0 or res.args.help != 0) {
-        std.debug.print("Provide an alias name to remove. Usage: zig-wol remove <NAME>\n", .{});
-        return std.debug.print("To remove all aliases: zig-wol remove --all\n", .{});
+        debug.print("Provide an alias name to remove. Usage: zig-wol remove <NAME>\n", .{});
+        return debug.print("To remove all aliases: zig-wol remove --all\n", .{});
     }
 
     // finally, if a name is provided, remove the alias
@@ -347,14 +350,14 @@ fn subCommandRemove(allocator: std.mem.Allocator, io: std.Io, iter: *std.process
         if (std.mem.eql(u8, item.name, name)) {
             _ = alias_list.orderedRemove(idx);
             alias.writeAliasFile(allocator, io, alias_list);
-            std.debug.print("Alias removed.\n", .{});
+            debug.print("Alias removed.\n", .{});
             return;
         }
     }
-    std.debug.print("Alias not found.\n", .{});
+    debug.print("Alias not found.\n", .{});
 }
 
-fn subCommandList(allocator: std.mem.Allocator, io: std.Io, iter: *std.process.Args.Iterator, main_args: MainArgs) !void {
+fn subCommandList(allocator: Allocator, io: Io, iter: *std.process.Args.Iterator, main_args: MainArgs) !void {
     _ = main_args;
 
     const params = comptime clap.parseParamsComptime(
@@ -375,7 +378,7 @@ fn subCommandList(allocator: std.mem.Allocator, io: std.Io, iter: *std.process.A
     defer alias_list.deinit(allocator);
 
     for (alias_list.items) |item| {
-        std.debug.print("Name: {s}\nMAC: {s}\nBroadcast: {s}\nPort: {d}\nFQDN: {s}\nDescription: {s}\n\n", .{
+        debug.print("Name: {s}\nMAC: {s}\nBroadcast: {s}\nPort: {d}\nFQDN: {s}\nDescription: {s}\n\n", .{
             item.name,
             item.mac,
             item.broadcast,
@@ -386,7 +389,7 @@ fn subCommandList(allocator: std.mem.Allocator, io: std.Io, iter: *std.process.A
     }
 }
 
-fn subCommandRelay(allocator: std.mem.Allocator, io: std.Io, iter: *std.process.Args.Iterator, main_args: MainArgs) !void {
+fn subCommandRelay(allocator: Allocator, io: Io, iter: *std.process.Args.Iterator, main_args: MainArgs) !void {
     _ = main_args;
 
     const params = comptime clap.parseParamsComptime(
@@ -424,32 +427,32 @@ fn subCommandRelay(allocator: std.mem.Allocator, io: std.Io, iter: *std.process.
     ;
 
     if (res.args.help != 0)
-        return std.debug.print("{s}", .{help_message});
+        return debug.print("{s}", .{help_message});
 
-    const listen_addr = std.Io.net.IpAddress.resolve(io, res.args.listen_address orelse {
-        std.debug.print("A value for the parameter --listen_address must be specified.\n\n", .{});
-        return std.debug.print("{s}", .{help_message});
+    const listen_addr = Io.net.IpAddress.resolve(io, res.args.listen_address orelse {
+        debug.print("A value for the parameter --listen_address must be specified.\n\n", .{});
+        return debug.print("{s}", .{help_message});
     }, res.args.listen_port orelse 9) catch |err| {
-        std.debug.print("Invalid listen address: {}\n\n", .{err});
-        return std.debug.print("{s}", .{help_message});
+        debug.print("Invalid listen address: {}\n\n", .{err});
+        return debug.print("{s}", .{help_message});
     };
 
-    const relay_addr = std.Io.net.IpAddress.resolve(io, res.args.relay_address orelse {
-        std.debug.print("A value for the parameter --relay_address must be specified.\n\n", .{});
-        return std.debug.print("{s}", .{help_message});
+    const relay_addr = Io.net.IpAddress.resolve(io, res.args.relay_address orelse {
+        debug.print("A value for the parameter --relay_address must be specified.\n\n", .{});
+        return debug.print("{s}", .{help_message});
     }, res.args.relay_port orelse 9) catch |err| {
-        std.debug.print("Invalid relay address: {}\n\n", .{err});
-        return std.debug.print("{s}", .{help_message});
+        debug.print("Invalid relay address: {}\n\n", .{err});
+        return debug.print("{s}", .{help_message});
     };
 
     wol.relay_begin(io, listen_addr, relay_addr) catch |err| {
-        return std.debug.print("Failed to start relay: {}\n", .{err});
+        return debug.print("Failed to start relay: {}\n", .{err});
     };
 }
 
 fn subCommandVersion() !void {
     const version = try std.SemanticVersion.parse(build_zig_zon.version);
-    std.debug.print("{f}\n", .{version});
+    debug.print("{f}\n", .{version});
 }
 
 fn subCommandHelp() !void {
@@ -468,5 +471,5 @@ fn subCommandHelp() !void {
         \\Run 'zig-wol <command> --help' for more information on a specific command.
         \\
     ;
-    std.debug.print("{s}\n", .{message});
+    debug.print("{s}\n", .{message});
 }

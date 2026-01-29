@@ -1,12 +1,15 @@
 const std = @import("std");
 const builtin = @import("builtin");
+const Allocator = std.mem.Allocator;
+const Io = std.Io;
+const testing = std.testing;
 
 /// Pings a machine given a FQDN using the system's ping command in a multithreaded context.
 /// The is_alive pointer is shared between threads, a mutex is used to ensure thread safety.
 /// If ping_forever is true, run indefinitely with a 5 second sleep between pings.
-pub fn ping_with_os_command_multithread(allocator: std.mem.Allocator, io: std.Io, alias_fqdn: []const u8, ping_forever: bool, mutex: *std.Thread.Mutex, is_alive: *bool) !void {
+pub fn ping_with_os_command_multithread(allocator: Allocator, io: Io, fqdn: []const u8, ping_forever: bool, mutex: *std.Thread.Mutex, is_alive: *bool) !void {
     while (true) {
-        const ping_result = ping_with_os_command(allocator, io, alias_fqdn) catch |err| {
+        const ping_result = ping_with_os_command(allocator, io, fqdn) catch |err| {
             return err;
         };
 
@@ -16,12 +19,12 @@ pub fn ping_with_os_command_multithread(allocator: std.mem.Allocator, io: std.Io
         mutex.unlock();
 
         if (!ping_forever) break;
-        try std.Io.sleep(io, .fromSeconds(5), .real); // do not spam too many pings if pinging forever
+        try Io.sleep(io, .fromSeconds(5), .real); // do not spam too many pings if pinging forever
     }
 }
 
 /// Pings a machine given a FQDN using the system's ping command, returns true if the ping was successful, false otherwise.
-pub fn ping_with_os_command(allocator: std.mem.Allocator, io: std.Io, fqdn: []const u8) !bool {
+pub fn ping_with_os_command(allocator: Allocator, io: Io, fqdn: []const u8) !bool {
     const args = switch (builtin.target.os.tag) {
         .linux, .macos => &[_][]const u8{ "ping", "-c", "1", "-W", "1", fqdn },
         .windows => &[_][]const u8{ "ping", "-n", "1", "-w", "1000", fqdn },
@@ -35,8 +38,8 @@ pub fn ping_with_os_command(allocator: std.mem.Allocator, io: std.Io, fqdn: []co
     defer allocator.free(result.stdout);
 
     if (result.term.exited == 0 and
-        std.mem.indexOf(u8, result.stdout, "unreachable") == null and
-        std.mem.indexOf(u8, result.stderr, "unreachable") == null)
+        std.mem.find(u8, result.stdout, "unreachable") == null and
+        std.mem.find(u8, result.stderr, "unreachable") == null)
     {
         return true;
     } else {
@@ -45,10 +48,7 @@ pub fn ping_with_os_command(allocator: std.mem.Allocator, io: std.Io, fqdn: []co
 }
 
 test "ping_with_os_command" {
-    const allocator = std.testing.allocator;
-    const io = std.testing.io;
-
-    try std.testing.expectEqual(true, try ping_with_os_command(allocator, io, "127.0.0.1"));
-    try std.testing.expectEqual(true, try ping_with_os_command(allocator, io, "localhost"));
-    try std.testing.expectEqual(false, try ping_with_os_command(allocator, io, "256.256.256.256"));
+    try testing.expectEqual(true, try ping_with_os_command(testing.allocator, testing.io, "127.0.0.1"));
+    try testing.expectEqual(true, try ping_with_os_command(testing.allocator, testing.io, "localhost"));
+    try testing.expectEqual(false, try ping_with_os_command(testing.allocator, testing.io, "256.256.256.256"));
 }
