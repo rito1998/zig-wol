@@ -4,11 +4,11 @@
     .version = "0.7.0",
     .dependencies = .{
         .clap = .{
-            .url = "git+https://github.com/Hejsil/zig-clap#efa85b280f66f6f8416a6ed7257d0351d9d48023",
-            .hash = "clap-0.11.0-oBajBzLuAQCsmHpejX0CKtZ4eG9dh9JFYK5kf1CnU-zx",
+            .url = "git+https://github.com/Hejsil/zig-clap#1d3d273524e3c180f015ff1e93c83075e4634e2c",
+            .hash = "clap-0.11.0-oBajB-jlAQA8x4XSScN1d48Q83iYl-LDU63htNyXbXBe",
         },
     },
-    .minimum_zig_version = "0.16.0-dev.2510+bcb5218a2",
+    .minimum_zig_version = "0.16.0-dev.2522+d84a638e8",
     .paths = .{
         "build.zig",
         "build.zig.zon",

@@ -4,8 +4,8 @@ const Allocator = std.mem.Allocator;
 const Io = std.Io;
 const testing = std.testing;
 
-/// Pings a machine given a FQDN using the system's ping command in a multithreaded context.
-/// The is_alive pointer is shared between threads, a mutex is used to ensure thread safety.
+/// Pings a FQDN with system's ping command in a multithreaded context.
+/// The is_alive points to a shared state array, a mutex is used for thread safety.
 /// If forever, run indefinitely with a 5 second sleep between pings.
 pub fn ping_with_os_command_multithread(allocator: Allocator, io: Io, fqdn: []const u8, forever: bool, mutex: *Io.Mutex, is_alive: *bool) !void {
     while (true) {
@@ -23,12 +23,11 @@ pub fn ping_with_os_command_multithread(allocator: Allocator, io: Io, fqdn: []co
     }
 }
 
-/// Pings a machine given a FQDN using the system's ping command, returns true if the ping was successful, false otherwise.
+/// Pings a FQDN with system's ping command, returns true if successful.
 pub fn ping_with_os_command(allocator: Allocator, io: Io, fqdn: []const u8) !bool {
     const args = switch (builtin.target.os.tag) {
-        .linux, .macos => &[_][]const u8{ "ping", "-c", "1", "-W", "1", fqdn },
         .windows => &[_][]const u8{ "ping", "-n", "1", "-w", "1000", fqdn },
-        else => @compileError("Unsupported OS"),
+        else => &[_][]const u8{ "ping", "-c", "1", "-W", "1", fqdn },
     };
 
     const result = try std.process.run(allocator, io, .{

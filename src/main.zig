@@ -167,7 +167,6 @@ fn subCommandStatus(allocator: Allocator, io: Io, iter: *process.Args.Iterator, 
     defer allocator.free(is_alive_array);
 
     var mutex = Io.Mutex.init;
-
     for (alias_list.items, 0..) |item, i| {
         threads[i] = try std.Thread.spawn(.{}, ping.ping_with_os_command_multithread, .{
             allocator,
@@ -191,49 +190,29 @@ fn subCommandStatus(allocator: Allocator, io: Io, iter: *process.Args.Iterator, 
         }
     }
 
-    // Try using unicode characters for status indication
-    var is_unicode_supported: bool = true;
-    // Green circle: 🟢 (U+1F7E2)
-    // Red circle: 🔴 (U+1F534)
-    const status_indicator_online_unicode = "\u{1F7E2}";
-    const status_indicator_offline_unicode = "\u{1F534}";
-    // if not supported fall back to text with ANSI colors
-    const ansi_green = "\x1b[32m";
-    const ansi_red = "\x1b[31m";
-    const ansi_reset = "\x1b[0m";
-    const status_indicator_online_ansi = ansi_green ++ "ONLINE " ++ ansi_reset;
-    const status_indicator_offline_ansi = ansi_red ++ "OFFLINE" ++ ansi_reset;
-
-    // To use UNICODE on windows we need to set the console code page to UTF-8 (id 65001)
-    // see https://learn.microsoft.com/en-us/windows/win32/intl/code-page-identifiers
-    if (builtin.target.os.tag == .windows) {
-        const windows_utf8_code_page = 65001;
-        const is_set_cp_ok = std.os.windows.kernel32.SetConsoleOutputCP(windows_utf8_code_page);
-        const new_cp = std.os.windows.kernel32.GetConsoleOutputCP();
-        is_unicode_supported = is_set_cp_ok != 0 and new_cp == windows_utf8_code_page;
-    }
-
-    // Finally select the status indicators based on unicode support
-    const status_indicator_online = if (is_unicode_supported) status_indicator_online_unicode else status_indicator_online_ansi;
-    const status_indicator_offline = if (is_unicode_supported) status_indicator_offline_unicode else status_indicator_offline_ansi;
+    var buf: [64]u8 = undefined;
+    var stdout_writer = Io.File.stdout().writer(io, &buf);
+    var stdout = &stdout_writer.interface;
 
     var idx: u64 = 0;
     while (true) {
         // reset the cursor to the top left before reprinting all lines
         if (res.args.live != 0 and idx != 0) {
-            debug.print("\u{1B}[{d}A\r", .{alias_list.items.len});
+            try stdout.print("\u{1B}[{d}A\r", .{alias_list.items.len});
         }
 
         // while accessing the results array to print the status, lock the mutex
         mutex.lockUncancelable(io);
         for (alias_list.items, 0..) |item, i| {
             if (is_alive_array[i]) {
-                debug.print("{s}  {s}\n", .{ status_indicator_online, item.name });
+                try stdout.print("{s}  {s}\n", .{ "\u{1F7E2}", item.name }); // Green circle: 🟢 (U+1F7E2)
             } else {
-                debug.print("{s}  {s}\n", .{ status_indicator_offline, item.name });
+                try stdout.print("{s}  {s}\n", .{ "\u{1F534}", item.name }); // Red circle: 🔴 (U+1F534)
             }
         }
         mutex.unlock(io);
+
+        try stdout.flush();
 
         if (is_status_live) {
             // sleep between each console update
