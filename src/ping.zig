@@ -6,19 +6,19 @@ const testing = std.testing;
 
 /// Pings a machine given a FQDN using the system's ping command in a multithreaded context.
 /// The is_alive pointer is shared between threads, a mutex is used to ensure thread safety.
-/// If ping_forever is true, run indefinitely with a 5 second sleep between pings.
-pub fn ping_with_os_command_multithread(allocator: Allocator, io: Io, fqdn: []const u8, ping_forever: bool, mutex: *std.Thread.Mutex, is_alive: *bool) !void {
+/// If forever, run indefinitely with a 5 second sleep between pings.
+pub fn ping_with_os_command_multithread(allocator: Allocator, io: Io, fqdn: []const u8, forever: bool, mutex: *Io.Mutex, is_alive: *bool) !void {
     while (true) {
         const ping_result = ping_with_os_command(allocator, io, fqdn) catch |err| {
             return err;
         };
 
         // lock the mutex while updating the shared is_alive variable
-        mutex.lock();
+        mutex.lockUncancelable(io);
         is_alive.* = ping_result;
-        mutex.unlock();
+        mutex.unlock(io);
 
-        if (!ping_forever) break;
+        if (!forever) break;
         try Io.sleep(io, .fromSeconds(5), .real); // do not spam too many pings if pinging forever
     }
 }

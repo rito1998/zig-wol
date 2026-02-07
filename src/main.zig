@@ -9,6 +9,7 @@ const ping = @import("ping.zig");
 const debug = std.debug;
 const Allocator = std.mem.Allocator;
 const Io = std.Io;
+const process = std.process;
 const log = std.log;
 
 const SubCommands = enum {
@@ -31,7 +32,7 @@ const main_params = clap.parseParamsComptime(
 );
 const MainArgs = clap.ResultEx(clap.Help, &main_params, main_parsers);
 
-pub fn main(init: std.process.Init) !void {
+pub fn main(init: process.Init) !void {
     const allocator = init.arena.allocator();
     const io = init.io;
 
@@ -67,7 +68,7 @@ pub fn main(init: std.process.Init) !void {
     }
 }
 
-fn subCommandWake(allocator: Allocator, io: Io, iter: *std.process.Args.Iterator, main_args: MainArgs) !void {
+fn subCommandWake(allocator: Allocator, io: Io, iter: *process.Args.Iterator, main_args: MainArgs) !void {
     _ = main_args;
 
     const params = comptime clap.parseParamsComptime(
@@ -125,7 +126,7 @@ fn subCommandWake(allocator: Allocator, io: Io, iter: *std.process.Args.Iterator
     }
 }
 
-fn subCommandStatus(allocator: Allocator, io: Io, iter: *std.process.Args.Iterator, main_args: MainArgs) !void {
+fn subCommandStatus(allocator: Allocator, io: Io, iter: *process.Args.Iterator, main_args: MainArgs) !void {
     _ = main_args;
 
     const params = comptime clap.parseParamsComptime(
@@ -165,7 +166,7 @@ fn subCommandStatus(allocator: Allocator, io: Io, iter: *std.process.Args.Iterat
     }
     defer allocator.free(is_alive_array);
 
-    var mutex = std.Thread.Mutex{};
+    var mutex = Io.Mutex.init;
 
     for (alias_list.items, 0..) |item, i| {
         threads[i] = try std.Thread.spawn(.{}, ping.ping_with_os_command_multithread, .{
@@ -224,7 +225,7 @@ fn subCommandStatus(allocator: Allocator, io: Io, iter: *std.process.Args.Iterat
         }
 
         // while accessing the results array to print the status, lock the mutex
-        mutex.lock();
+        mutex.lockUncancelable(io);
         for (alias_list.items, 0..) |item, i| {
             if (is_alive_array[i]) {
                 debug.print("{s}  {s}\n", .{ status_indicator_online, item.name });
@@ -232,7 +233,7 @@ fn subCommandStatus(allocator: Allocator, io: Io, iter: *std.process.Args.Iterat
                 debug.print("{s}  {s}\n", .{ status_indicator_offline, item.name });
             }
         }
-        mutex.unlock();
+        mutex.unlock(io);
 
         if (is_status_live) {
             // sleep between each console update
@@ -244,7 +245,7 @@ fn subCommandStatus(allocator: Allocator, io: Io, iter: *std.process.Args.Iterat
     }
 }
 
-fn subCommandAlias(allocator: Allocator, io: Io, iter: *std.process.Args.Iterator, main_args: MainArgs) !void {
+fn subCommandAlias(allocator: Allocator, io: Io, iter: *process.Args.Iterator, main_args: MainArgs) !void {
     _ = main_args;
 
     const params = comptime clap.parseParamsComptime(
@@ -304,7 +305,7 @@ fn subCommandAlias(allocator: Allocator, io: Io, iter: *std.process.Args.Iterato
     log.info("Alias added.\n", .{});
 }
 
-fn subCommandRemove(allocator: Allocator, io: Io, iter: *std.process.Args.Iterator, main_args: MainArgs) !void {
+fn subCommandRemove(allocator: Allocator, io: Io, iter: *process.Args.Iterator, main_args: MainArgs) !void {
     _ = main_args;
 
     const params = comptime clap.parseParamsComptime(
@@ -358,7 +359,7 @@ fn subCommandRemove(allocator: Allocator, io: Io, iter: *std.process.Args.Iterat
     log.err("Alias not found.\n", .{});
 }
 
-fn subCommandList(allocator: Allocator, io: Io, iter: *std.process.Args.Iterator, main_args: MainArgs) !void {
+fn subCommandList(allocator: Allocator, io: Io, iter: *process.Args.Iterator, main_args: MainArgs) !void {
     _ = main_args;
 
     const params = comptime clap.parseParamsComptime(
@@ -378,8 +379,14 @@ fn subCommandList(allocator: Allocator, io: Io, iter: *std.process.Args.Iterator
     var alias_list = alias.readAliasFile(allocator, io);
     defer alias_list.deinit(allocator);
 
+    var buf: [64]u8 = undefined;
+    var stdout = Io.File.stdout().writer(io, &buf);
+    defer stdout.interface.flush() catch |err| {
+        log.err("Failed to flush stdout: {}\n", .{err});
+    };
+
     for (alias_list.items) |item| {
-        debug.print("Name: {s}\nMAC: {s}\nBroadcast: {s}\nPort: {d}\nFQDN: {s}\nDescription: {s}\n\n", .{
+        try stdout.interface.print("Name: {s}\nMAC: {s}\nBroadcast: {s}\nPort: {d}\nFQDN: {s}\nDescription: {s}\n\n", .{
             item.name,
             item.mac,
             item.broadcast,
@@ -390,7 +397,7 @@ fn subCommandList(allocator: Allocator, io: Io, iter: *std.process.Args.Iterator
     }
 }
 
-fn subCommandRelay(allocator: Allocator, io: Io, iter: *std.process.Args.Iterator, main_args: MainArgs) !void {
+fn subCommandRelay(allocator: Allocator, io: Io, iter: *process.Args.Iterator, main_args: MainArgs) !void {
     _ = main_args;
 
     const params = comptime clap.parseParamsComptime(
@@ -434,7 +441,7 @@ fn subCommandRelay(allocator: Allocator, io: Io, iter: *std.process.Args.Iterato
         log.err("A value for the parameter --listen_address must be specified.\n\n", .{});
         return debug.print("{s}", .{help_message});
     }, res.args.listen_port orelse 9) catch |err| {
-        debug.print("Invalid listen address: {}\n\n", .{err});
+        log.err("Invalid listen address: {}\n\n", .{err});
         return debug.print("{s}", .{help_message});
     };
 
@@ -442,7 +449,7 @@ fn subCommandRelay(allocator: Allocator, io: Io, iter: *std.process.Args.Iterato
         log.err("A value for the parameter --relay_address must be specified.\n\n", .{});
         return debug.print("{s}", .{help_message});
     }, res.args.relay_port orelse 9) catch |err| {
-        debug.print("Invalid relay address: {}\n\n", .{err});
+        log.err("Invalid relay address: {}\n\n", .{err});
         return debug.print("{s}", .{help_message});
     };
 
