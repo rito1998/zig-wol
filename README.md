@@ -109,10 +109,10 @@ pub fn main(init: std.process.Init) !void {
 
 ## Remote wake-on-lan
 
-Using the subcommand **relay** it is possible to make zig-wol work as a beacon that listens on `--listen` for inbound wake-on-lan magic packets and relays them to a `--relay`.
+Use the subcommand **relay** to make zig-wol work as a beacon that listens on a port for inbound wake-on-lan magic packets, for example coming from a router, and relays them, usually to the LAN broadcast in order to wake devices.
 
 ```sh
-zig-wol relay --listen 192.168.0.10:9999 --relay 192.168.0.255:9
+zig-wol relay 192.168.0.10:9999 192.168.0.255:9
 ```
 
 A realistic example usage, using the command above as a reference, is to have a home LAN comprised of one or more powerful machines that need to be woken remotely and an always-on low-power machine, like a Raspberry Pi, that runs the `zig-wol relay` repeater.
@@ -155,9 +155,7 @@ AmbientCapabilities=CAP_NET_BIND_SERVICE
 CapabilityBoundingSet=CAP_NET_BIND_SERVICE
 WorkingDirectory=/home/USERNAME/.zig-wol
 ExecStartPre=/bin/sleep 5
-ExecStart=/home/USERNAME/.zig-wol/zig-wol relay \\
-  --listen=192.168.0.10 --listen_port=9999 \\
-  --relay=192.168.0.255 --relay_port=9
+ExecStart=/home/USERNAME/.zig-wol/zig-wol relay 192.168.0.10:9999 192.168.0.255:9
 Restart=on-failure
 RestartSec=10s
 
