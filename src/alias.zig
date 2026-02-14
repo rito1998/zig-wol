@@ -1,8 +1,9 @@
 const std = @import("std");
-const Allocator = std.mem.Allocator;
-const Io = std.Io;
+const testing = std.testing;
 const process = std.process;
 const log = std.log;
+const Allocator = std.mem.Allocator;
+const Io = std.Io;
 const ArrayList = std.ArrayList;
 
 pub const Alias = struct {
@@ -104,18 +105,18 @@ pub fn readAliasFile(allocator: Allocator, io: Io) ArrayList(Alias) {
 }
 
 test "readAliasFile" {
-    const allocator = std.testing.allocator;
-    const io = std.testing.io;
+    const allocator = testing.allocator;
+    const io = testing.io;
 
     var alias_list = readAliasFile(allocator, io);
     defer alias_list.deinit(allocator);
 
-    try std.testing.expect(alias_list.items.len >= 1);
+    try testing.expect(alias_list.items.len >= 1);
 
     log.info("First alias: {s}, {s}, {s}", .{ alias_list.items[0].name, alias_list.items[0].mac, alias_list.items[0].description });
 
-    try std.testing.expect(std.mem.eql(u8, alias_list.items[0].name, "alias-example-unreachable"));
-    try std.testing.expect(std.mem.eql(u8, alias_list.items[0].mac, "01-01-01-ab-ab-ab"));
+    try testing.expect(std.mem.eql(u8, alias_list.items[0].name, "alias-example-unreachable"));
+    try testing.expect(std.mem.eql(u8, alias_list.items[0].mac, "01-01-01-ab-ab-ab"));
 }
 
 /// Write the alias file in the same directory as the executable. Overwrites if it already exists.
@@ -144,8 +145,8 @@ pub fn writeAliasFile(allocator: Allocator, io: Io, alias_list: ArrayList(Alias)
 }
 
 test "writeAliasFile" {
-    const allocator = std.testing.allocator;
-    const io = std.testing.io;
+    const allocator = testing.allocator;
+    const io = testing.io;
 
     var alias_list = getExampleAliasList(allocator);
     defer alias_list.deinit(allocator);
@@ -173,8 +174,8 @@ pub fn getAliasFilePath(allocator: Allocator, io: Io) []u8 {
 }
 
 test "getAliasFilePath" {
-    const allocator = std.testing.allocator;
-    const io = std.testing.io;
+    const allocator = testing.allocator;
+    const io = testing.io;
 
     const file_path = getAliasFilePath(allocator, io);
     defer allocator.free(file_path);
@@ -196,8 +197,8 @@ pub fn aliasFileExists(allocator: Allocator, io: Io) bool {
 }
 
 test "aliasFileExists" {
-    const allocator = std.testing.allocator;
-    const io = std.testing.io;
+    const allocator = testing.allocator;
+    const io = testing.io;
 
     _ = aliasFileExists(allocator, io);
 }

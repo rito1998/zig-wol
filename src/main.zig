@@ -449,13 +449,9 @@ fn subCommandRelay(allocator: Allocator, io: Io, iter: *process.Args.Iterator, m
 }
 
 fn subCommandVersion(io: Io) !void {
-    const version = try std.SemanticVersion.parse(build_zig_zon.version);
-
-    var buf: [64]u8 = undefined;
-    var stdout = Io.File.stdout().writer(io, &buf);
-
-    try stdout.interface.print("{f}\n", .{version});
-    try stdout.interface.flush();
+    const version = comptime try std.SemanticVersion.parse(build_zig_zon.version);
+    const version_string = std.fmt.comptimePrint("{f}\n", .{version});
+    try Io.File.stdout().writeStreamingAll(io, version_string);
 }
 
 fn subCommandHelp(io: Io) !void {
@@ -474,5 +470,5 @@ fn subCommandHelp(io: Io) !void {
         \\Run 'zig-wol <command> --help' for more information on a specific command.
         \\
     ;
-    try std.Io.File.stdout().writeStreamingAll(io, message);
+    try Io.File.stdout().writeStreamingAll(io, message);
 }
