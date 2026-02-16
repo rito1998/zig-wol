@@ -14,7 +14,7 @@ const log = std.log;
 
 const SubCommands = enum {
     wake,
-    status,
+    ping,
     alias,
     remove,
     list,
@@ -26,7 +26,7 @@ const main_parsers = .{
     .command = clap.parsers.enumeration(SubCommands),
 };
 const main_params = clap.parseParamsComptime(
-    \\-h, --help  Display this help and exit.
+    \\-h, --help   Display this help and exit.
     \\<command>
     \\
 );
@@ -55,10 +55,19 @@ pub fn main(init: process.Init) !void {
         return subCommandHelp(io);
     }
 
+    // Set codepage to display emojis correctly on Windows
+    if (builtin.target.os.tag == .windows) {
+        var setcp = std.os.windows.CONSOLE.USER_IO.SET_CP(.Output, 65001);
+        const ntstatus = try setcp.operate(io, null);
+        if (ntstatus != .SUCCESS) {
+            log.warn("Failed to set codepage 65001: characters may not display correctly.", .{});
+        }
+    }
+
     const subcommand = res.positionals[0] orelse return subCommandHelp(io);
     switch (subcommand) {
         .wake => try subCommandWake(allocator, io, &iter, res),
-        .status => try subCommandStatus(allocator, io, &iter, res),
+        .ping => try subCommandPing(allocator, io, &iter, res),
         .alias => try subCommandAlias(allocator, io, &iter, res),
         .remove => try subCommandRemove(allocator, io, &iter, res),
         .list => try subCommandList(allocator, io, &iter, res),
@@ -92,7 +101,7 @@ fn subCommandWake(allocator: Allocator, io: Io, iter: *process.Args.Iterator, ma
     const help_message = "Provide a MAC or an alias name. Usage: zig-wol wake <MAC or ALIAS> [options]\n";
 
     if (res.args.help != 0)
-        return debug.print("{s}", .{help_message});
+        return try Io.File.stdout().writeStreamingAll(io, help_message);
 
     // if --all is provided, wake up all devices in the alias list
     if (res.args.all != 0) {
@@ -106,7 +115,7 @@ fn subCommandWake(allocator: Allocator, io: Io, iter: *process.Args.Iterator, ma
         return;
     }
 
-    const mac = res.positionals[0] orelse return debug.print("{s}", .{help_message});
+    const mac = res.positionals[0] orelse return log.err("{s}", .{help_message});
 
     if (wol.is_mac_valid(mac)) {
         return try wol.broadcast_magic_packet_ipv4(io, mac, res.args.port, res.args.broadcast, null);
@@ -126,12 +135,12 @@ fn subCommandWake(allocator: Allocator, io: Io, iter: *process.Args.Iterator, ma
     }
 }
 
-fn subCommandStatus(allocator: Allocator, io: Io, iter: *process.Args.Iterator, main_args: MainArgs) !void {
+fn subCommandPing(allocator: Allocator, io: Io, iter: *process.Args.Iterator, main_args: MainArgs) !void {
     _ = main_args;
 
     const params = comptime clap.parseParamsComptime(
-        \\--live            Ping continuously.
-        \\--help            Display this help and exit.
+        \\--forever   Ping continuously.
+        \\--help      Display this help and exit.
     );
 
     var diag = clap.Diagnostic{};
@@ -145,14 +154,14 @@ fn subCommandStatus(allocator: Allocator, io: Io, iter: *process.Args.Iterator, 
     defer res.deinit();
 
     const help_message =
-        \\Ping all aliases to check their status. Usage: zig-wol status [--live] [--help]
+        \\Ping all aliases. Usage: zig-wol ping [--forever] [--help]
         \\Make sure a FQDN/IP is set accordingly for each alias.
     ;
 
     if (res.args.help != 0)
-        return debug.print("{s}", .{help_message});
+        return try Io.File.stdout().writeStreamingAll(io, help_message);
 
-    const is_status_live = res.args.live != 0;
+    const forever = res.args.forever != 0;
 
     var alias_list = alias.readAliasFile(allocator, io);
     defer alias_list.deinit(allocator);
@@ -160,11 +169,11 @@ fn subCommandStatus(allocator: Allocator, io: Io, iter: *process.Args.Iterator, 
     var threads = try allocator.alloc(std.Thread, alias_list.items.len);
     defer allocator.free(threads);
 
-    var is_alive_array = try allocator.alloc(bool, alias_list.items.len);
-    for (is_alive_array) |*item| {
+    var is_alive = try allocator.alloc(bool, alias_list.items.len);
+    for (is_alive) |*item| {
         item.* = false;
     }
-    defer allocator.free(is_alive_array);
+    defer allocator.free(is_alive);
 
     var mutex = Io.Mutex.init;
     for (alias_list.items, 0..) |item, i| {
@@ -172,30 +181,19 @@ fn subCommandStatus(allocator: Allocator, io: Io, iter: *process.Args.Iterator, 
             allocator,
             io,
             item.fqdn,
-            is_status_live,
+            forever,
             &mutex,
-            &is_alive_array[i],
+            &is_alive[i],
         });
     }
 
-    if (is_status_live) {
-        // in live mode detach threads so they can run independently forever
+    if (forever) {
         for (threads) |thread| {
             _ = thread.detach();
         }
     } else {
-        // in non-live mode (one ping only) wait for all threads to finish.
         for (threads) |thread| {
             _ = thread.join();
-        }
-    }
-
-    // Set codepage to display emojis correctly on Windows
-    if (builtin.target.os.tag == .windows) {
-        var setcp = std.os.windows.CONSOLE.USER_IO.SET_CP(.Output, 65001);
-        const ntstatus = try setcp.operate(io, null);
-        if (ntstatus != .SUCCESS) {
-            log.warn("Failed to set codepage 65001: characters may not display correctly.", .{});
         }
     }
 
@@ -208,14 +206,14 @@ fn subCommandStatus(allocator: Allocator, io: Io, iter: *process.Args.Iterator, 
     var idx: u64 = 0;
     while (true) {
         // reset the cursor to the top left before reprinting all lines
-        if (res.args.live != 0 and idx != 0) {
+        if (res.args.forever != 0 and idx != 0) {
             try stdout.print("\u{1B}[{d}A\r", .{alias_list.items.len});
         }
 
-        // while accessing the results array to print the status, lock the mutex
+        // while accessing the results array to print the ping results, lock the mutex
         mutex.lockUncancelable(io);
         for (alias_list.items, 0..) |item, i| {
-            if (is_alive_array[i]) {
+            if (is_alive[i]) {
                 try stdout.print("{s}  {s}\n", .{ "\u{1F7E2}", item.name }); // Green circle: 🟢 (U+1F7E2)
             } else {
                 try stdout.print("{s}  {s}\n", .{ "\u{1F534}", item.name }); // Red circle: 🔴 (U+1F534)
@@ -225,7 +223,7 @@ fn subCommandStatus(allocator: Allocator, io: Io, iter: *process.Args.Iterator, 
 
         try stdout.flush();
 
-        if (is_status_live) {
+        if (forever) {
             // sleep between each console update
             try Io.sleep(io, .fromSeconds(1), .real);
         } else {
@@ -246,7 +244,7 @@ fn subCommandAlias(allocator: Allocator, io: Io, iter: *process.Args.Iterator, m
         \\<str>                 MAC for the new alias.
         \\--broadcast <str>     IPv4, defaults to 255.255.255.255, setting this may be required in some scenarios.
         \\--port <u16>          UDP port, default 9. Generally irrelevant since wake-on-lan works with OSI layer 2 (Data Link).
-        \\--fqdn <str>          Fully Qualified Domain Name or IP address. Required to ping for displaying the status.
+        \\--fqdn <str>          Fully Qualified Domain Name or IP address. Required to ping for displaying the ping.
         \\--description <str>   Description for the new alias.
         \\-h, --help
     );
@@ -331,10 +329,17 @@ fn subCommandRemove(allocator: Allocator, io: Io, iter: *process.Args.Iterator, 
         return;
     }
 
+    const help_message =
+        \\Provide an alias name to remove. Usage: zig-wol remove <NAME>
+        \\To remove all aliases: zig-wol remove --all
+    ;
+
+    if (res.args.help != 0)
+        return try Io.File.stdout().writeStreamingAll(io, help_message);
+
     // if name len is 0 or --help is provided, print help message
-    if (name.len == 0 or res.args.help != 0) {
-        debug.print("Provide an alias name to remove. Usage: zig-wol remove <NAME>\n", .{});
-        return debug.print("To remove all aliases: zig-wol remove --all\n", .{});
+    if (name.len == 0) {
+        return log.err("Provide an alias name.", .{});
     }
 
     // finally, if a name is provided, remove the alias
@@ -345,8 +350,7 @@ fn subCommandRemove(allocator: Allocator, io: Io, iter: *process.Args.Iterator, 
         if (std.mem.eql(u8, item.name, name)) {
             _ = alias_list.orderedRemove(idx);
             alias.writeAliasFile(allocator, io, alias_list);
-            log.info("Alias removed.", .{});
-            return;
+            return log.info("Alias removed.", .{});
         }
     }
     log.err("Alias not found.", .{});
@@ -459,7 +463,7 @@ fn subCommandHelp(io: Io) !void {
         \\Usage: zig-wol <command> [options]
         \\Commands:
         \\  wake      Wake up a device by its MAC.
-        \\  status    Ping all aliases.
+        \\  ping      Ping all aliases.
         \\  alias     Create an alias for a MAC, optionally specify a broadcast, FQDN and more.
         \\  remove    Remove an alias by name.
         \\  list      List all aliases.

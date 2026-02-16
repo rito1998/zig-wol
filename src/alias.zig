@@ -28,7 +28,7 @@ fn getExampleAliasList(allocator: Allocator) ArrayList(Alias) {
         .broadcast = "255.255.255.255",
         .port = 9,
         .fqdn = "alias-example.unreachable-by-ping",
-        .description = "Alias example. Works with WOL but cannot be pinged.",
+        .description = "Alias example. Supports WOL but cannot be pinged.",
     }) catch {
         log.err("Error appending to alias list", .{});
         process.exit(1);
@@ -40,7 +40,7 @@ fn getExampleAliasList(allocator: Allocator) ArrayList(Alias) {
         .broadcast = "255.255.255.255",
         .port = 9,
         .fqdn = "localhost",
-        .description = "Alias example. Can be pinged successfully when using the subcommand status. Does not support WOL.",
+        .description = "Alias example. Can be pinged but does not support WOL.",
     }) catch {
         log.err("Error appending to alias list", .{});
         process.exit(1);
