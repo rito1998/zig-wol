@@ -96,11 +96,11 @@ pub fn broadcast_magic_packet_ipv4(io: Io, mac: []const u8, port: ?u16, broadcas
     const magic_packet = generate_magic_packet(mac_bytes);
 
     // Create a UDP socket
-    const localhost = Io.net.IpAddress.parse("0.0.0.0", 0) catch |err| {
-        log.err("Failed to parse localhost address: {}", .{err});
+    const any_addr = Io.net.IpAddress.parse("0.0.0.0", 0) catch |err| {
+        log.err("Failed to parse address: {}", .{err});
         return error.InvalidAddress;
     };
-    const socket = Io.net.IpAddress.bind(&localhost, io, .{ .mode = .dgram, .protocol = .udp }) catch |err| {
+    const socket = Io.net.IpAddress.bind(&any_addr, io, .{ .mode = .dgram, .protocol = .udp }) catch |err| {
         log.err("Failed to bind UDP socket: {}", .{err});
         return err;
     };
