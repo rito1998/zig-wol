@@ -94,7 +94,7 @@ fn subCommandWake(allocator: Allocator, io: Io, iter: *process.Args.Iterator, ma
         .allocator = allocator,
     }) catch |err| {
         try diag.reportToFile(io, .stderr(), err);
-        return err;
+        process.exit(1);
     };
     defer res.deinit();
 
@@ -149,7 +149,7 @@ fn subCommandPing(allocator: Allocator, io: Io, iter: *process.Args.Iterator, ma
         .allocator = allocator,
     }) catch |err| {
         try diag.reportToFile(io, .stderr(), err);
-        return err;
+        process.exit(1);
     };
     defer res.deinit();
 
@@ -252,7 +252,7 @@ fn subCommandAlias(allocator: Allocator, io: Io, iter: *process.Args.Iterator, m
         .allocator = allocator,
     }) catch |err| {
         try diag.reportToFile(io, .stderr(), err);
-        return err;
+        process.exit(1);
     };
     defer res.deinit();
 
@@ -308,7 +308,7 @@ fn subCommandRemove(allocator: Allocator, io: Io, iter: *process.Args.Iterator, 
         .allocator = allocator,
     }) catch |err| {
         try diag.reportToFile(io, .stderr(), err);
-        return err;
+        process.exit(1);
     };
     defer res.deinit();
 
@@ -366,7 +366,7 @@ fn subCommandList(allocator: Allocator, io: Io, iter: *process.Args.Iterator, ma
         .allocator = allocator,
     }) catch |err| {
         try diag.reportToFile(io, .stderr(), err);
-        return err;
+        process.exit(1);
     };
     defer res.deinit();
 
@@ -406,7 +406,7 @@ fn subCommandRelay(allocator: Allocator, io: Io, iter: *process.Args.Iterator, m
         .allocator = allocator,
     }) catch |err| {
         try diag.reportToFile(io, .stderr(), err);
-        return err;
+        process.exit(1);
     };
     defer res.deinit();
 
