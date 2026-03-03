@@ -6,7 +6,7 @@ const testing = std.testing;
 
 /// Parse a MAC address string into an array of 6 bytes.
 /// Expects length 17 and separator either "-" or ":" (e.g. 01-23-45-AB-CD-EF)
-pub fn parse_mac(mac: []const u8) ![6]u8 {
+pub fn parseMac(mac: []const u8) ![6]u8 {
     if (mac.len != 17) return error.InvalidMacAddress;
 
     // Expect either ':' or '-'
@@ -34,43 +34,43 @@ pub fn parse_mac(mac: []const u8) ![6]u8 {
     return mac_octets;
 }
 
-test "parse_mac valid cases" {
-    try testing.expectEqual(parse_mac("01:23:45:67:89:ab"), [6]u8{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xab });
-    try testing.expectEqual(parse_mac("01:23:45:67:89:Ab"), [6]u8{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xab });
-    try testing.expectEqual(parse_mac("01:23:45:67:89:AB"), [6]u8{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xab });
-    try testing.expectEqual(parse_mac("01-23-45-67-89-ab"), [6]u8{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB });
-    try testing.expectEqual(parse_mac("01-23-45-67-89-Ab"), [6]u8{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB });
-    try testing.expectEqual(parse_mac("01-23-45-67-89-AB"), [6]u8{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB });
+test "parseMac valid cases" {
+    try testing.expectEqual(parseMac("01:23:45:67:89:ab"), [6]u8{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xab });
+    try testing.expectEqual(parseMac("01:23:45:67:89:Ab"), [6]u8{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xab });
+    try testing.expectEqual(parseMac("01:23:45:67:89:AB"), [6]u8{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xab });
+    try testing.expectEqual(parseMac("01-23-45-67-89-ab"), [6]u8{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB });
+    try testing.expectEqual(parseMac("01-23-45-67-89-Ab"), [6]u8{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB });
+    try testing.expectEqual(parseMac("01-23-45-67-89-AB"), [6]u8{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB });
 }
 
-test "parse_mac invalid cases" {
-    try testing.expectError(error.InvalidMacAddress, parse_mac("0123456789AB")); // No separators
-    try testing.expectError(error.InvalidMacAddress, parse_mac("01:23:45:67:89")); // Too short
-    try testing.expectError(error.InvalidMacAddress, parse_mac("01:23:45:67:89:AB:CD")); // Too long
-    try testing.expectError(error.InvalidMacAddress, parse_mac("01:23:45:67:89:GG")); // Invalid hex
-    try testing.expectError(error.InvalidMacAddress, parse_mac("01-23:45-67:89:AB")); // Mixed separators
-    try testing.expectError(error.InvalidMacAddress, parse_mac("01::23:45:67:89:AB")); // Extra colon
-    try testing.expectError(error.InvalidMacAddress, parse_mac("")); // Empty string
+test "parseMac invalid cases" {
+    try testing.expectError(error.InvalidMacAddress, parseMac("0123456789AB")); // No separators
+    try testing.expectError(error.InvalidMacAddress, parseMac("01:23:45:67:89")); // Too short
+    try testing.expectError(error.InvalidMacAddress, parseMac("01:23:45:67:89:AB:CD")); // Too long
+    try testing.expectError(error.InvalidMacAddress, parseMac("01:23:45:67:89:GG")); // Invalid hex
+    try testing.expectError(error.InvalidMacAddress, parseMac("01-23:45-67:89:AB")); // Mixed separators
+    try testing.expectError(error.InvalidMacAddress, parseMac("01::23:45:67:89:AB")); // Extra colon
+    try testing.expectError(error.InvalidMacAddress, parseMac("")); // Empty string
 }
 
 /// Expects length 17 and separator either "-" or ":" (e.g. 01-23-45-AB-CD-EF)
-pub fn is_mac_valid(mac: []const u8) bool {
-    _ = parse_mac(mac) catch return false;
+pub fn isMacValid(mac: []const u8) bool {
+    _ = parseMac(mac) catch return false;
     return true;
 }
 
-test "is_mac_valid" {
-    try testing.expectEqual(is_mac_valid("01:23:45:67:89:ab"), true);
-    try testing.expectEqual(is_mac_valid("01-23-45-67-89-ab"), true);
-    try testing.expectEqual(is_mac_valid("01:23:45:67:89"), false); // Too short
-    try testing.expectEqual(is_mac_valid("01:23:45:67:89:AB:CD"), false); // Too long
-    try testing.expectEqual(is_mac_valid("01:23:45:67:89:GG"), false); // Invalid hex
-    try testing.expectEqual(is_mac_valid("01-23:45-67-89:AB"), false); // Mixed separators
-    try testing.expectEqual(is_mac_valid("01::23:45:67:89:AB"), false); // Extra colon
-    try testing.expectEqual(is_mac_valid(""), false); // Empty string
+test "isMacValid" {
+    try testing.expectEqual(isMacValid("01:23:45:67:89:ab"), true);
+    try testing.expectEqual(isMacValid("01-23-45-67-89-ab"), true);
+    try testing.expectEqual(isMacValid("01:23:45:67:89"), false); // Too short
+    try testing.expectEqual(isMacValid("01:23:45:67:89:AB:CD"), false); // Too long
+    try testing.expectEqual(isMacValid("01:23:45:67:89:GG"), false); // Invalid hex
+    try testing.expectEqual(isMacValid("01-23:45-67-89:AB"), false); // Mixed separators
+    try testing.expectEqual(isMacValid("01::23:45:67:89:AB"), false); // Extra colon
+    try testing.expectEqual(isMacValid(""), false); // Empty string
 }
 
-pub fn generate_magic_packet(mac_bytes: [6]u8) [102]u8 {
+pub fn generateMagicPacket(mac_bytes: [6]u8) [102]u8 {
     var packet: [102]u8 = undefined;
     @memset(packet[0..6], 0xFF); // First 6 bytes are 0xFF
     for (0..16) |i| {
@@ -81,7 +81,7 @@ pub fn generate_magic_packet(mac_bytes: [6]u8) [102]u8 {
 
 /// Send a magic packet to wake up a device with the specified MAC address.
 /// The broadcast address is expected as literal address:port, e.g. "255.255.255.255:9".
-pub fn broadcast_magic_packet_ipv4(io: Io, mac: []const u8, broadcast: ?[]const u8, count: ?u8) !void {
+pub fn broadcastMagicPacket(io: Io, mac: []const u8, broadcast: ?[]const u8, count: ?u8) !void {
     // Defaults
     var actual_broadcast = try Io.net.IpAddress.parseLiteral(broadcast orelse "255.255.255.255:9");
     if (actual_broadcast.getPort() == 0) {
@@ -90,11 +90,11 @@ pub fn broadcast_magic_packet_ipv4(io: Io, mac: []const u8, broadcast: ?[]const 
     }
     const actual_count = count orelse 3; // how man times the magic packet is sent
 
-    const mac_bytes = parse_mac(mac) catch |err| {
+    const mac_bytes = parseMac(mac) catch |err| {
         log.err("Invalid MAC address: {}", .{err});
         return err;
     };
-    const magic_packet = generate_magic_packet(mac_bytes);
+    const magic_packet = generateMagicPacket(mac_bytes);
 
     // Create a UDP socket
     const any_addr = Io.net.IpAddress.parse("0.0.0.0", 0) catch |err| {
@@ -126,7 +126,7 @@ pub fn broadcast_magic_packet_ipv4(io: Io, mac: []const u8, broadcast: ?[]const 
 }
 
 /// Checks if a sequence is a valid magic packet: 6 bytes of 0xFF followed by the MAC address bytes repeated 16 times.
-pub fn is_magic_packet(sequence: [102]u8) bool {
+pub fn isMagicPacket(sequence: [102]u8) bool {
     // Check if the first 6 bytes are all 0xFF
     if (std.mem.eql(u8, sequence[0..6], &[_]u8{ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }) == false) {
         return false;
@@ -141,7 +141,7 @@ pub fn is_magic_packet(sequence: [102]u8) bool {
     return true;
 }
 
-test "is_magic_packet (valid)" {
+test "isMagicPacket (valid)" {
     const valid_packet: [102]u8 = [_]u8{
         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
         0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
@@ -161,10 +161,10 @@ test "is_magic_packet (valid)" {
         0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
         0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
     };
-    try testing.expect(is_magic_packet(valid_packet));
+    try testing.expect(isMagicPacket(valid_packet));
 }
 
-test "is_magic_packet (invalid - broken header)" {
+test "isMagicPacket (invalid - broken header)" {
     const invalid_packet_broken_header: [102]u8 = [_]u8{
         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xAA, // broken header
         0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
@@ -184,10 +184,10 @@ test "is_magic_packet (invalid - broken header)" {
         0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
         0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
     };
-    try testing.expect(!is_magic_packet(invalid_packet_broken_header));
+    try testing.expect(!isMagicPacket(invalid_packet_broken_header));
 }
 
-test "is_magic_packet (invalid - broken repetition)" {
+test "isMagicPacket (invalid - broken repetition)" {
     const invalid_packet_broken_repetition: [102]u8 = [_]u8{
         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
         0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
@@ -207,11 +207,11 @@ test "is_magic_packet (invalid - broken repetition)" {
         0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
         0x01, 0x02, 0x03, 0x04, 0x05, 0xFF, // broken repetition
     };
-    try testing.expect(!is_magic_packet(invalid_packet_broken_repetition));
+    try testing.expect(!isMagicPacket(invalid_packet_broken_repetition));
 }
 
 /// Never returns. Listens for magic packets and relays them to the specified address and port.
-pub fn relay_begin(io: Io, listen_addr: Io.net.IpAddress, relay_addr: Io.net.IpAddress) !void {
+pub fn relayBegin(io: Io, listen_addr: Io.net.IpAddress, relay_addr: Io.net.IpAddress) !void {
     const socket = Io.net.IpAddress.bind(&listen_addr, io, .{
         .mode = .dgram,
         .protocol = .udp,
@@ -245,7 +245,7 @@ pub fn relay_begin(io: Io, listen_addr: Io.net.IpAddress, relay_addr: Io.net.IpA
             continue; // ignore packets that are not 102 bytes
         }
 
-        if (!is_magic_packet(buf)) {
+        if (!isMagicPacket(buf)) {
             log.warn("Received packet ignored: invalid WOL packet.\n", .{});
             continue;
         }

@@ -108,7 +108,7 @@ fn subCommandWake(allocator: Allocator, io: Io, iter: *process.Args.Iterator, ma
         defer alias_list.deinit(allocator);
 
         for (alias_list.items) |item| {
-            try wol.broadcast_magic_packet_ipv4(io, item.mac, item.broadcast, null);
+            try wol.broadcastMagicPacket(io, item.mac, item.broadcast, null);
             try Io.sleep(io, .fromMilliseconds(100), .real); // sleep between packets
         }
         return;
@@ -116,8 +116,8 @@ fn subCommandWake(allocator: Allocator, io: Io, iter: *process.Args.Iterator, ma
 
     const mac = res.positionals[0] orelse return log.err("{s}", .{help_message});
 
-    if (wol.is_mac_valid(mac)) {
-        return try wol.broadcast_magic_packet_ipv4(io, mac, res.args.broadcast, null);
+    if (wol.isMacValid(mac)) {
+        return try wol.broadcastMagicPacket(io, mac, res.args.broadcast, null);
     } else {
         var alias_list = alias.readAliasFile(allocator, io);
         defer alias_list.deinit(allocator);
@@ -125,7 +125,7 @@ fn subCommandWake(allocator: Allocator, io: Io, iter: *process.Args.Iterator, ma
         for (alias_list.items) |item| {
             if (item.name.len > 0 and item.name.len == mac.len) {
                 if (std.mem.eql(u8, item.name, mac)) {
-                    return try wol.broadcast_magic_packet_ipv4(io, item.mac, item.broadcast, null);
+                    return try wol.broadcastMagicPacket(io, item.mac, item.broadcast, null);
                 }
             }
         }
@@ -185,7 +185,7 @@ fn subCommandPing(allocator: Allocator, io: Io, iter: *process.Args.Iterator, ma
         // launch async pings and await all futures
         for (alias_list.items, 0..) |item, i| {
             futures[i] = io.async(
-                ping.ping_with_os_command,
+                ping.systemPing,
                 .{ allocator, io, item.fqdn },
             );
         }
@@ -255,7 +255,7 @@ fn subCommandAlias(allocator: Allocator, io: Io, iter: *process.Args.Iterator, m
 
     const name = res.positionals[0] orelse return log.err("Provide name and MAC for the new alias. Usage: zig-wol alias <NAME> <MAC>", .{});
     const mac = res.positionals[1] orelse return log.err("Provide a MAC. Usage: zig-wol alias <NAME> <MAC>", .{});
-    _ = wol.parse_mac(mac) catch |err| {
+    _ = wol.parseMac(mac) catch |err| {
         return log.err("Invalid MAC: {}", .{err});
     };
     const broadcast = res.args.broadcast orelse "255.255.255.255:9";
@@ -442,7 +442,7 @@ fn subCommandRelay(allocator: Allocator, io: Io, iter: *process.Args.Iterator, m
         return debug.print("{s}", .{help_message});
     };
 
-    wol.relay_begin(io, listen, relay) catch |err| {
+    wol.relayBegin(io, listen, relay) catch |err| {
         return log.err("Failed to start relay: {}", .{err});
     };
 }

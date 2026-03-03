@@ -103,7 +103,7 @@ Import the module in `main.zig` and broadcast a magic packet.
 const wol = @import("wol");
 
 pub fn main(init: std.process.Init) !void {
-    try wol.broadcast_magic_packet_ipv4(init.io, "11-22-33-44-55-66", 10, "255.255.255.255:9", 1);
+    try wol.broadcastMagicPacket(init.io, "11-22-33-44-55-66", 10, "255.255.255.255:9", 1);
 }
 ```
 
