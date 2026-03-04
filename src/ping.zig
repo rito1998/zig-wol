@@ -48,15 +48,22 @@ pub fn systemPingFqdn(allocator: Allocator, io: Io, fqdn: []const u8, result: *b
 }
 
 test "systemPingFqdn" {
-    try testing.expectEqual(true, try systemPingFqdn(testing.allocator, testing.io, "127.0.0.1"));
-    try testing.expectEqual(true, try systemPingFqdn(testing.allocator, testing.io, "localhost"));
+    var result: bool = undefined;
+
+    try systemPingFqdn(testing.allocator, testing.io, "127.0.0.1", &result);
+    try testing.expect(result);
+
+    try systemPingFqdn(testing.allocator, testing.io, "localhost", &result);
+    try testing.expect(result);
+
     try testing.expectError(
-        Io.net.HostName.ExpandError.InvalidHostName,
-        systemPingFqdn(testing.allocator, testing.io, "invalid hostname"),
+        Io.Cancelable.Canceled,
+        systemPingFqdn(testing.allocator, testing.io, "invalid hostname", &result),
     );
+
     try testing.expectError(
-        Io.net.HostName.ConnectError.UnknownHostName,
-        systemPingFqdn(testing.allocator, testing.io, "256.256.256.256"),
+        Io.Cancelable.Canceled,
+        systemPingFqdn(testing.allocator, testing.io, "256.256.256.256", &result),
     );
 }
 
@@ -74,7 +81,5 @@ pub fn hostnameLookup(io: Io, fqdn: []const u8) !Io.net.IpAddress {
     );
 
     const lookup_result = try queue.getOne(io);
-    std.log.info("resolved {s} to {f}", .{ fqdn, lookup_result.address });
-
     return lookup_result.address;
 }
