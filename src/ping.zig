@@ -4,10 +4,8 @@ const Allocator = std.mem.Allocator;
 const Io = std.Io;
 const testing = std.testing;
 
-/// Pings a FQDN with system's ping command, returns true if successful.
-pub fn systemPing(allocator: Allocator, io: Io, fqdn: []const u8) anyerror!bool {
-    const address = try hostnameLookup(io, fqdn);
-
+/// Pings an IP address with system's ping command, returns true if successful.
+pub fn systemPingIpAddress(allocator: Allocator, io: Io, address: Io.net.IpAddress) anyerror!bool {
     var buf: [255]u8 = undefined;
     const address_literal = switch (address) {
         .ip4 => blk: {
@@ -28,7 +26,7 @@ pub fn systemPing(allocator: Allocator, io: Io, fqdn: []const u8) anyerror!bool 
         // the ICMP reached the target. Note: ping.exe does not distinguish (by exit code)
         // whether the ICMP reached the target or an intermediary.
         .windows => &[_][]const u8{ "PowerShell", "Test-NetConnection", address_literal, "-InformationLevel", "Quiet" },
-        else => &[_][]const u8{ "ping", "-c", "1", "-W", "1", fqdn },
+        else => &[_][]const u8{ "ping", "-c", "1", "-W", "1", address_literal },
     };
 
     const result = try std.process.run(allocator, io, .{
@@ -43,20 +41,26 @@ pub fn systemPing(allocator: Allocator, io: Io, fqdn: []const u8) anyerror!bool 
     }
 }
 
-test "systemPing" {
-    try testing.expectEqual(true, try systemPing(testing.allocator, testing.io, "127.0.0.1"));
-    try testing.expectEqual(true, try systemPing(testing.allocator, testing.io, "localhost"));
+/// Resolves a FQDN and pings it with system ping utility, returns true if successful.
+pub fn systemPingFqdn(allocator: Allocator, io: Io, fqdn: []const u8) anyerror!bool {
+    const address = try hostnameLookup(io, fqdn);
+    return systemPingIpAddress(allocator, io, address);
+}
+
+test "systemPingFqdn" {
+    try testing.expectEqual(true, try systemPingFqdn(testing.allocator, testing.io, "127.0.0.1"));
+    try testing.expectEqual(true, try systemPingFqdn(testing.allocator, testing.io, "localhost"));
     try testing.expectError(
         Io.net.HostName.ExpandError.InvalidHostName,
-        systemPing(testing.allocator, testing.io, "invalid hostname"),
+        systemPingFqdn(testing.allocator, testing.io, "invalid hostname"),
     );
     try testing.expectError(
         Io.net.HostName.ConnectError.UnknownHostName,
-        systemPing(testing.allocator, testing.io, "256.256.256.256"),
+        systemPingFqdn(testing.allocator, testing.io, "256.256.256.256"),
     );
 }
 
-fn hostnameLookup(io: Io, fqdn: []const u8) !Io.net.IpAddress {
+pub fn hostnameLookup(io: Io, fqdn: []const u8) !Io.net.IpAddress {
     try Io.net.HostName.validate(fqdn);
 
     var buf_canonical_name: [255]u8 = undefined;
@@ -70,5 +74,7 @@ fn hostnameLookup(io: Io, fqdn: []const u8) !Io.net.IpAddress {
     );
 
     const lookup_result = try queue.getOne(io);
+    std.log.info("resolved {s} to {f}", .{ fqdn, lookup_result.address });
+
     return lookup_result.address;
 }
