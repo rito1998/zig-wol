@@ -177,17 +177,41 @@ fn subCommandPing(allocator: Allocator, io: Io, iter: *process.Args.Iterator, ma
 
     //try stdout.print("\u{1B}[?25l", .{}); // hide cursor
 
+    // name resolution
+    var resolved_addresses = try allocator.alloc(?Io.net.IpAddress, alias_list.items.len);
+    defer allocator.free(resolved_addresses);
+
+    var futures = try allocator.alloc(Io.Future(anyerror!Io.net.IpAddress), alias_list.items.len);
+
+    for (alias_list.items, 0..) |item, i| {
+        if (item.fqdn.len == 0) {
+            continue;
+        }
+        futures[i] = io.async(
+            ping.hostnameLookup,
+            .{ io, item.fqdn },
+        );
+    }
+    for (alias_list.items, 0..) |item, i| {
+        if (item.fqdn.len == 0) {
+            continue;
+        }
+        resolved_addresses[i] = futures[i].await(io) catch null;
+    }
+
     var group = Io.Group.init;
 
     var idx: u64 = 0;
     while (true) {
         // launch async pings and await all futures
-        for (alias_list.items, 0..) |item, i| {
-            group.async(
-                io,
-                ping.systemPingFqdn,
-                .{ allocator, io, item.fqdn, &is_alive[i] },
-            );
+        for (resolved_addresses, 0..) |address, i| {
+            if (address) |addr| {
+                group.async(
+                    io,
+                    ping.systemPingIpAddress,
+                    .{ allocator, io, addr, &is_alive[i] },
+                );
+            }
         }
         try group.await(io);
 

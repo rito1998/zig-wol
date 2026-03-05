@@ -5,18 +5,18 @@ const Io = std.Io;
 const testing = std.testing;
 
 /// Pings an IP address with system's ping command, returns true if successful.
-pub fn systemPingIpAddress(allocator: Allocator, io: Io, address: Io.net.IpAddress) !bool {
+pub fn systemPingIpAddress(allocator: Allocator, io: Io, address: Io.net.IpAddress, result: *bool) Io.Cancelable!void {
     var buf: [255]u8 = undefined;
     const address_literal = switch (address) {
         .ip4 => blk: {
-            const literal = try std.fmt.bufPrint(&buf, "{f}", .{address.ip4});
+            const literal = std.fmt.bufPrint(&buf, "{f}", .{address.ip4}) catch return Io.Cancelable.Canceled;
             if (std.mem.findLast(u8, literal, ":")) |index| {
                 break :blk literal[0..index];
             } else {
                 break :blk literal;
             }
         },
-        .ip6 => try std.fmt.bufPrint(&buf, "{f}", .{address.ip6}),
+        .ip6 => std.fmt.bufPrint(&buf, "{f}", .{address.ip6}) catch return Io.Cancelable.Canceled,
     };
 
     //std.log.info("address_literal -> {s}", .{address_literal});
@@ -29,22 +29,22 @@ pub fn systemPingIpAddress(allocator: Allocator, io: Io, address: Io.net.IpAddre
         else => &[_][]const u8{ "ping", "-c", "1", "-W", "1", address_literal },
     };
 
-    const result = try std.process.run(allocator, io, .{
+    const run_result = std.process.run(allocator, io, .{
         .argv = args,
-    });
-    defer allocator.free(result.stderr);
-    defer allocator.free(result.stdout);
+    }) catch return Io.Cancelable.Canceled;
+    defer allocator.free(run_result.stderr);
+    defer allocator.free(run_result.stdout);
 
     switch (builtin.target.os.tag) {
-        .windows => return result.term.exited == 0 and std.mem.find(u8, result.stdout, "True") == 0,
-        else => return result.term.exited == 0,
+        .windows => result.* = run_result.term.exited == 0 and std.mem.find(u8, run_result.stdout, "True") == 0,
+        else => result.* = run_result.term.exited == 0,
     }
 }
 
 /// Resolves a FQDN and pings it with system ping utility.
 pub fn systemPingFqdn(allocator: Allocator, io: Io, fqdn: []const u8, result: *bool) Io.Cancelable!void {
     const address = hostnameLookup(io, fqdn) catch return Io.Cancelable.Canceled;
-    result.* = systemPingIpAddress(allocator, io, address) catch return Io.Cancelable.Canceled;
+    systemPingIpAddress(allocator, io, address, result) catch return Io.Cancelable.Canceled;
 }
 
 test "systemPingFqdn" {
@@ -67,7 +67,7 @@ test "systemPingFqdn" {
     );
 }
 
-pub fn hostnameLookup(io: Io, fqdn: []const u8) !Io.net.IpAddress {
+pub fn hostnameLookup(io: Io, fqdn: []const u8) anyerror!Io.net.IpAddress {
     try Io.net.HostName.validate(fqdn);
 
     var buf_canonical_name: [255]u8 = undefined;
@@ -81,5 +81,6 @@ pub fn hostnameLookup(io: Io, fqdn: []const u8) !Io.net.IpAddress {
     );
 
     const lookup_result = try queue.getOne(io);
+    std.log.info("hostnameLookup: {s} -> {f}", .{ fqdn, lookup_result.address });
     return lookup_result.address;
 }
