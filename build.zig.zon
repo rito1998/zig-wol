@@ -1,6 +1,6 @@
 .{
-    .name = .zigwol,
-    .fingerprint = 0xde77714c68dfba75,
+    .name = .wol,
+    .fingerprint = 0x89efddc744af097,
     .version = "0.7.0",
     .dependencies = .{
         .clap = .{
@@ -8,8 +8,8 @@
             .hash = "clap-0.11.0-oBajBxDoAQChQCl4LRM4tyf-VChKLbhYilS806xxzxrQ",
         },
         .eui = .{
-            .url = "git+https://github.com/rktr1998/zig-eui#daee184788922fd9e0dad3c760955c943fceee13",
-            .hash = "zig_eui-0.1.0-4Y2qJE4gAABBcKCWkdj2_FHqucuVx60VR2bpaoQ9R6sO",
+            .url = "git+https://github.com/rktr1998/zig-eui#f662a21f8c70918d0aa74d61b95216b56fd08ee9",
+            .hash = "eui-0.1.0--PejyawfAABkHkS-3g2FUE5vMHH4JXlNS1qp2f7xJ8gQ",
         },
     },
     .minimum_zig_version = "0.16.0-dev.2694+74f361a5c",

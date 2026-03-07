@@ -87,7 +87,7 @@ This command compiles the source code and places the executable in the `zig-out/
 It is possible to use the wake-on-lan functionality of this project as a library.
 
 ```sh
-zig fetch --save=wol git+https://github.com/rktr1998/zig-wol
+zig fetch --save git+https://github.com/rktr1998/zig-wol
 ```
 
 Add the wol module from the fetched dependency in `build.zig`.
