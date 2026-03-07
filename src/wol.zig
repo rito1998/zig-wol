@@ -3,7 +3,7 @@ const Io = std.Io;
 const posix = std.posix;
 const log = std.log;
 const testing = std.testing;
-const Eui48 = @import("eui").Eui48;
+pub const Eui48 = @import("eui").Eui48;
 
 pub fn generateMagicPacket(mac_bytes: [6]u8) [102]u8 {
     var packet: [102]u8 = undefined;
