@@ -5,6 +5,7 @@ const clap = @import("clap");
 const wol = @import("wol.zig");
 const alias = @import("alias.zig");
 const ping = @import("ping.zig");
+const Eui48 = @import("eui").Eui48;
 
 const debug = std.debug;
 const Allocator = std.mem.Allocator;
@@ -116,7 +117,7 @@ fn subCommandWake(allocator: Allocator, io: Io, iter: *process.Args.Iterator, ma
 
     const mac = res.positionals[0] orelse return log.err("{s}", .{help_message});
 
-    if (wol.isMacValid(mac)) {
+    if (Eui48.isValid(mac)) {
         return try wol.broadcastMagicPacket(io, mac, res.args.broadcast, null);
     } else {
         var alias_list = alias.readAliasFile(allocator, io);
@@ -268,7 +269,7 @@ fn subCommandAlias(allocator: Allocator, io: Io, iter: *process.Args.Iterator, m
 
     const name = res.positionals[0] orelse return log.err("Provide name and MAC for the new alias. Usage: zig-wol alias <NAME> <MAC>", .{});
     const mac = res.positionals[1] orelse return log.err("Provide a MAC. Usage: zig-wol alias <NAME> <MAC>", .{});
-    _ = wol.parseMac(mac) catch |err| {
+    _ = Eui48.fromLiteral(mac) catch |err| {
         return log.err("Invalid MAC: {}", .{err});
     };
     const broadcast = res.args.broadcast orelse "255.255.255.255:9";

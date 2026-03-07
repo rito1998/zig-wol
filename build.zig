@@ -12,30 +12,33 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
+    // --------------------------- IMPORTS ------------------------------
+    const imports: [4]std.Build.Module.Import = .{
+        // Add dependencies from local modules
+        .{ .name = "wol", .module = wol_module },
+        // Add dependencies from fetched third-party libs (see build.zig.zon)
+        .{ .name = "clap", .module = b.dependency("clap", .{}).module("clap") },
+        .{ .name = "eui", .module = b.dependency("eui", .{}).module("eui") },
+        // Create and import a module for build.zig.zon, allows using its .version field in the codebase
+        .{ .name = "build_zig_zon", .module = b.createModule(.{
+            .root_source_file = b.path("build.zig.zon"),
+            .target = target,
+            .optimize = optimize,
+        }) },
+    };
+
     // --------------------------- EXECUTABLE ---------------------------
     // Create, add and install the exe
     const exe = b.addExecutable(.{
+        .name = "zig-wol",
         .root_module = b.createModule(.{
             .root_source_file = b.path("src/main.zig"),
             .target = target,
             .optimize = optimize,
             .link_libc = true,
+            .imports = &imports,
         }),
-        .name = "zig-wol",
     });
-
-    // Add dependencies from local modules
-    exe.root_module.addImport("wol", wol_module);
-
-    // Add dependencies from fetched third-party libs (see build.zig.zon)
-    exe.root_module.addImport("clap", b.dependency("clap", .{}).module("clap"));
-
-    // Create and import a module for build.zig.zon, allows using its .version field in the codebase
-    exe.root_module.addImport("build_zig_zon", b.createModule(.{
-        .root_source_file = b.path("build.zig.zon"),
-        .target = target,
-        .optimize = optimize,
-    }));
 
     b.installArtifact(exe);
 
@@ -65,6 +68,7 @@ pub fn build(b: *std.Build) void {
             .root_source_file = b.path("src/tests.zig"),
             .target = target,
             .optimize = optimize,
+            .imports = &imports,
         }),
     });
 

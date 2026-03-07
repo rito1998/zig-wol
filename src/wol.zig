@@ -3,72 +3,7 @@ const Io = std.Io;
 const posix = std.posix;
 const log = std.log;
 const testing = std.testing;
-
-/// Parse a MAC address string into an array of 6 bytes.
-/// Expects length 17 and separator either "-" or ":" (e.g. 01-23-45-AB-CD-EF)
-pub fn parseMac(mac: []const u8) ![6]u8 {
-    if (mac.len != 17) return error.InvalidMacAddress;
-
-    // Expect either ':' or '-'
-    const sep: u8 = mac[2];
-    if (sep != ':' and sep != '-') return error.InvalidMacAddress;
-
-    // Ensure all separators are the same
-    var i: usize = 2;
-    while (i < mac.len) : (i += 3) {
-        if (mac[i] != sep) return error.InvalidMacAddress;
-    }
-
-    var mac_split_iterator = std.mem.tokenizeSequence(u8, mac, &.{sep});
-    var mac_octets: [6]u8 = undefined;
-    var idx: usize = 0;
-
-    while (mac_split_iterator.next()) |mac_part| {
-        if (idx >= 6) return error.InvalidMacAddress;
-        mac_octets[idx] = std.fmt.parseInt(u8, mac_part, 16) catch return error.InvalidMacAddress;
-        idx += 1;
-    }
-
-    if (idx != 6) return error.InvalidMacAddress;
-
-    return mac_octets;
-}
-
-test "parseMac valid cases" {
-    try testing.expectEqual(parseMac("01:23:45:67:89:ab"), [6]u8{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xab });
-    try testing.expectEqual(parseMac("01:23:45:67:89:Ab"), [6]u8{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xab });
-    try testing.expectEqual(parseMac("01:23:45:67:89:AB"), [6]u8{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xab });
-    try testing.expectEqual(parseMac("01-23-45-67-89-ab"), [6]u8{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB });
-    try testing.expectEqual(parseMac("01-23-45-67-89-Ab"), [6]u8{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB });
-    try testing.expectEqual(parseMac("01-23-45-67-89-AB"), [6]u8{ 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB });
-}
-
-test "parseMac invalid cases" {
-    try testing.expectError(error.InvalidMacAddress, parseMac("0123456789AB")); // No separators
-    try testing.expectError(error.InvalidMacAddress, parseMac("01:23:45:67:89")); // Too short
-    try testing.expectError(error.InvalidMacAddress, parseMac("01:23:45:67:89:AB:CD")); // Too long
-    try testing.expectError(error.InvalidMacAddress, parseMac("01:23:45:67:89:GG")); // Invalid hex
-    try testing.expectError(error.InvalidMacAddress, parseMac("01-23:45-67:89:AB")); // Mixed separators
-    try testing.expectError(error.InvalidMacAddress, parseMac("01::23:45:67:89:AB")); // Extra colon
-    try testing.expectError(error.InvalidMacAddress, parseMac("")); // Empty string
-}
-
-/// Expects length 17 and separator either "-" or ":" (e.g. 01-23-45-AB-CD-EF)
-pub fn isMacValid(mac: []const u8) bool {
-    _ = parseMac(mac) catch return false;
-    return true;
-}
-
-test "isMacValid" {
-    try testing.expectEqual(isMacValid("01:23:45:67:89:ab"), true);
-    try testing.expectEqual(isMacValid("01-23-45-67-89-ab"), true);
-    try testing.expectEqual(isMacValid("01:23:45:67:89"), false); // Too short
-    try testing.expectEqual(isMacValid("01:23:45:67:89:AB:CD"), false); // Too long
-    try testing.expectEqual(isMacValid("01:23:45:67:89:GG"), false); // Invalid hex
-    try testing.expectEqual(isMacValid("01-23:45-67-89:AB"), false); // Mixed separators
-    try testing.expectEqual(isMacValid("01::23:45:67:89:AB"), false); // Extra colon
-    try testing.expectEqual(isMacValid(""), false); // Empty string
-}
+const Eui48 = @import("eui").Eui48;
 
 pub fn generateMagicPacket(mac_bytes: [6]u8) [102]u8 {
     var packet: [102]u8 = undefined;
@@ -90,11 +25,11 @@ pub fn broadcastMagicPacket(io: Io, mac: []const u8, broadcast: ?[]const u8, cou
     }
     const actual_count = count orelse 3; // how man times the magic packet is sent
 
-    const mac_bytes = parseMac(mac) catch |err| {
+    const eui48 = Eui48.fromLiteral(mac) catch |err| {
         log.err("Invalid MAC address: {}", .{err});
         return err;
     };
-    const magic_packet = generateMagicPacket(mac_bytes);
+    const magic_packet = generateMagicPacket(eui48.bytes);
 
     // Create a UDP socket
     const any_addr = Io.net.IpAddress.parse("0.0.0.0", 0) catch |err| {

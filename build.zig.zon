@@ -7,6 +7,10 @@
             .url = "git+https://github.com/Hejsil/zig-clap#27621cb7207643f914bae7b01902b22a8b5916e7",
             .hash = "clap-0.11.0-oBajBxDoAQChQCl4LRM4tyf-VChKLbhYilS806xxzxrQ",
         },
+        .eui = .{
+            .url = "git+https://github.com/rktr1998/zig-eui#daee184788922fd9e0dad3c760955c943fceee13",
+            .hash = "zig_eui-0.1.0-4Y2qJE4gAABBcKCWkdj2_FHqucuVx60VR2bpaoQ9R6sO",
+        },
     },
     .minimum_zig_version = "0.16.0-dev.2694+74f361a5c",
     .paths = .{
