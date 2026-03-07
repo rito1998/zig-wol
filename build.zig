@@ -4,28 +4,25 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    // --------------------------- WOL MODULE ---------------------------
-    // note: wol module is created so that other projects can use it with zig fetch and @import("wol").
-    const wol_module = b.addModule("wol", .{
-        .root_source_file = b.path("src/wol.zig"),
+    // --------------------------- IMPORTS -----------------------------
+    const clap = b.dependency("clap", .{}).module("clap");
+    const eui = b.dependency("eui", .{}).module("eui");
+    const build_zig_zon = b.createModule(.{
+        .root_source_file = b.path("build.zig.zon"),
         .target = target,
         .optimize = optimize,
     });
 
-    // --------------------------- IMPORTS ------------------------------
-    const imports: [4]std.Build.Module.Import = .{
-        // Add dependencies from local modules
-        .{ .name = "wol", .module = wol_module },
-        // Add dependencies from fetched third-party libs (see build.zig.zon)
-        .{ .name = "clap", .module = b.dependency("clap", .{}).module("clap") },
-        .{ .name = "eui", .module = b.dependency("eui", .{}).module("eui") },
-        // Create and import a module for build.zig.zon, allows using its .version field in the codebase
-        .{ .name = "build_zig_zon", .module = b.createModule(.{
-            .root_source_file = b.path("build.zig.zon"),
-            .target = target,
-            .optimize = optimize,
-        }) },
-    };
+    // --------------------------- WOL MODULE ---------------------------
+    // note: wol module is created so that other projects can use it with zig fetch and @import("wol").
+    const wol = b.addModule("wol", .{
+        .root_source_file = b.path("src/wol.zig"),
+        .target = target,
+        .optimize = optimize,
+        .imports = &.{
+            .{ .name = "eui", .module = eui },
+        },
+    });
 
     // --------------------------- EXECUTABLE ---------------------------
     // Create, add and install the exe
@@ -36,7 +33,12 @@ pub fn build(b: *std.Build) void {
             .target = target,
             .optimize = optimize,
             .link_libc = true,
-            .imports = &imports,
+            .imports = &.{
+                .{ .name = "wol", .module = wol },
+                .{ .name = "clap", .module = clap },
+                .{ .name = "eui", .module = eui },
+                .{ .name = "build_zig_zon", .module = build_zig_zon },
+            },
         }),
     });
 
@@ -68,7 +70,11 @@ pub fn build(b: *std.Build) void {
             .root_source_file = b.path("src/tests.zig"),
             .target = target,
             .optimize = optimize,
-            .imports = &imports,
+            .imports = &.{
+                .{ .name = "wol", .module = wol },
+                .{ .name = "clap", .module = clap },
+                .{ .name = "eui", .module = eui },
+            },
         }),
     });
 
