@@ -8,8 +8,8 @@
             .hash = "clap-0.11.0-oBajBxDoAQChQCl4LRM4tyf-VChKLbhYilS806xxzxrQ",
         },
         .eui = .{
-            .url = "git+https://github.com/rktr1998/zig-eui#f662a21f8c70918d0aa74d61b95216b56fd08ee9",
-            .hash = "eui-0.1.0--PejyawfAABkHkS-3g2FUE5vMHH4JXlNS1qp2f7xJ8gQ",
+            .url = "git+https://github.com/rktr1998/zig-eui#b46c6a1aa4184466c27b3c3c0c381e435526e043",
+            .hash = "eui-0.1.0--PejyRYhAACRHR0a2BmtcQOWoLflBaffpv1X6KAogAhk",
         },
     },
     .minimum_zig_version = "0.16.0-dev.2694+74f361a5c",
