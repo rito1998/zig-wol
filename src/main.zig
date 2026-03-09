@@ -302,7 +302,7 @@ fn subCommandAlias(allocator: Allocator, io: Io, iter: *process.Args.Iterator, m
     }) catch |err| {
         return log.err("Failed to add alias: {}", .{err});
     };
-    alias.writeAliasFile(allocator, io, alias_list);
+    alias.writeAliasFile(allocator, io, alias_list.items);
 
     log.info("Alias added.", .{});
 }
@@ -335,7 +335,7 @@ fn subCommandRemove(allocator: Allocator, io: Io, iter: *process.Args.Iterator, 
         defer alias_list.deinit(allocator);
 
         alias_list.clearAndFree(allocator);
-        alias.writeAliasFile(allocator, io, alias_list);
+        alias.writeAliasFile(allocator, io, alias_list.items);
         log.info("Removed {d} aliases.", .{alias_count});
         return;
     }
@@ -360,7 +360,7 @@ fn subCommandRemove(allocator: Allocator, io: Io, iter: *process.Args.Iterator, 
     for (alias_list.items, 0..) |item, idx| {
         if (std.mem.eql(u8, item.name, name)) {
             _ = alias_list.orderedRemove(idx);
-            alias.writeAliasFile(allocator, io, alias_list);
+            alias.writeAliasFile(allocator, io, alias_list.items);
             return log.info("Alias removed.", .{});
         }
     }

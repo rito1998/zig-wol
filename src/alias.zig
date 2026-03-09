@@ -54,7 +54,7 @@ pub fn readAliasFile(allocator: Allocator, io: Io) ArrayList(Alias) {
     if (!aliasFileExists(allocator, io)) {
         log.info("Alias list file does not exist, creating the default file...", .{});
         const example_alias_list = getExampleAliasList(allocator);
-        writeAliasFile(allocator, io, example_alias_list);
+        writeAliasFile(allocator, io, example_alias_list.items);
         return example_alias_list;
     }
 
@@ -120,7 +120,7 @@ test "readAliasFile" {
 }
 
 /// Write the alias file in the same directory as the executable. Overwrites if it already exists.
-pub fn writeAliasFile(allocator: Allocator, io: Io, alias_list: ArrayList(Alias)) void {
+pub fn writeAliasFile(allocator: Allocator, io: Io, alias_slice: []Alias) void {
     const file_path = getAliasFilePath(allocator, io);
     defer allocator.free(file_path);
 
@@ -138,7 +138,7 @@ pub fn writeAliasFile(allocator: Allocator, io: Io, alias_list: ArrayList(Alias)
         process.exit(1);
     };
 
-    std.zon.stringify.serialize(alias_list.items, .{}, writer_interface) catch |err| {
+    std.zon.stringify.serialize(alias_slice, .{}, writer_interface) catch |err| {
         log.err("Error serializing alias file: {}", .{err});
         process.exit(1);
     };
@@ -150,7 +150,7 @@ test "writeAliasFile" {
 
     var alias_list = getExampleAliasList(allocator);
     defer alias_list.deinit(allocator);
-    writeAliasFile(allocator, io, alias_list);
+    writeAliasFile(allocator, io, alias_list.items);
 }
 
 /// Computes the absolute path to the alias file in the same directory as the executable.
