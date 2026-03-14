@@ -23,7 +23,7 @@ pub fn broadcastMagicPacket(io: Io, mac: []const u8, broadcast: ?[]const u8, cou
         log.warn("Provided broadcast address {f} has no port specified, defaulting to port 9.", .{actual_broadcast});
         actual_broadcast.setPort(9);
     }
-    const actual_count = count orelse 3; // how man times the magic packet is sent
+    const actual_count = count orelse 3;
 
     const eui48 = Eui48.fromLiteral(mac) catch |err| {
         log.err("Invalid MAC address: {}", .{err});

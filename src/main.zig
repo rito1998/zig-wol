@@ -253,7 +253,7 @@ fn subCommandAlias(allocator: Allocator, io: Io, iter: *process.Args.Iterator, m
     const params = comptime clap.parseParamsComptime(
         \\<str>                 Name for the new alias.
         \\<str>                 MAC for the new alias.
-        \\--broadcast <str>     IpAddress, defaults to 255.255.255.255:9, setting this may be required in some scenarios.
+        \\--broadcast <str>     IpAddress, defaults to 255.255.255.255:9, setting this may be necessary when there are multiple network interfaces.
         \\--fqdn <str>          Fully Qualified Domain Name or IP address. Required to ping for displaying the ping.
         \\--description <str>   Description for the new alias.
         \\-h, --help
