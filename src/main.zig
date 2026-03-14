@@ -117,7 +117,9 @@ fn subCommandWake(allocator: Allocator, io: Io, iter: *process.Args.Iterator, ma
 
     const mac = res.positionals[0] orelse return log.err("{s}", .{help_message});
 
-    if (Eui48.isValid(mac)) {
+    const eui48 = Eui48.fromLiteral(mac);
+
+    if (eui48 != Eui48.Error.InvalidLiteral) {
         return try wol.broadcastMagicPacket(io, mac, res.args.broadcast, null);
     } else {
         var alias_list = alias.readAliasFile(allocator, io);
