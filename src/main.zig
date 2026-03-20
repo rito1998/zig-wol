@@ -255,7 +255,6 @@ fn subCommandAlias(allocator: Allocator, io: Io, iter: *process.Args.Iterator, m
         \\<str>                 MAC for the new alias.
         \\--broadcast <str>     IpAddress, defaults to 255.255.255.255:9, setting this may be necessary when there are multiple network interfaces.
         \\--fqdn <str>          Fully Qualified Domain Name or IP address. Required to ping for displaying the ping.
-        \\--description <str>   Description for the new alias.
         \\-h, --help
     );
 
@@ -282,7 +281,6 @@ fn subCommandAlias(allocator: Allocator, io: Io, iter: *process.Args.Iterator, m
         return log.err("Broadcast must include a port, e.g. 255.255.255.255:9.", .{});
     }
     const fqdn = res.args.fqdn orelse "";
-    const description = res.args.description orelse "";
 
     // get config from file, add alias and save config to file
     var alias_list = alias.readAliasFile(allocator, io);
@@ -300,7 +298,6 @@ fn subCommandAlias(allocator: Allocator, io: Io, iter: *process.Args.Iterator, m
         .mac = mac,
         .broadcast = broadcast,
         .fqdn = fqdn,
-        .description = description,
     }) catch |err| {
         return log.err("Failed to add alias: {}", .{err});
     };
@@ -396,12 +393,11 @@ fn subCommandList(allocator: Allocator, io: Io, iter: *process.Args.Iterator, ma
     };
 
     for (alias_list.items) |item| {
-        try stdout.interface.print("Name: {s}\nMAC: {s}\nBroadcast: {s}\nFQDN: {s}\nDescription: {s}\n\n", .{
+        try stdout.interface.print("Name: {s}\nMAC: {s}\nBroadcast: {s}\nFQDN: {s}\n\n", .{
             item.name,
             item.mac,
             item.broadcast,
             item.fqdn,
-            item.description,
         });
     }
 }

@@ -7,11 +7,10 @@ const Io = std.Io;
 const ArrayList = std.ArrayList;
 
 pub const Alias = struct {
-    name: []const u8,
+    name: [10]u8,
     mac: []const u8,
     broadcast: []const u8,
     fqdn: []const u8,
-    description: []const u8,
 };
 
 /// Return the example alias list. Caller must free the memory after use.
@@ -26,7 +25,6 @@ fn getExampleAliasList(allocator: Allocator) ArrayList(Alias) {
         .mac = "01-01-01-ab-ab-ab",
         .broadcast = "255.255.255.255:9",
         .fqdn = "alias-example.unreachable-by-ping",
-        .description = "Alias example. Supports WOL but cannot be pinged.",
     }) catch {
         log.err("Error appending to alias list", .{});
         process.exit(1);
@@ -37,7 +35,6 @@ fn getExampleAliasList(allocator: Allocator) ArrayList(Alias) {
         .mac = "00-00-00-00-00-00",
         .broadcast = "255.255.255.255:9",
         .fqdn = "localhost",
-        .description = "Alias example. Can be pinged but does not support WOL.",
     }) catch {
         log.err("Error appending to alias list", .{});
         process.exit(1);
@@ -100,7 +97,7 @@ test "readAliasFile" {
 
     try testing.expect(alias_list.items.len >= 1);
 
-    log.info("First alias: {s}, {s}, {s}", .{ alias_list.items[0].name, alias_list.items[0].mac, alias_list.items[0].description });
+    log.info("First alias: {s}, {s}", .{ alias_list.items[0].name, alias_list.items[0].mac });
 
     try testing.expect(std.mem.eql(u8, alias_list.items[0].name, "alias-example-unreachable"));
     try testing.expect(std.mem.eql(u8, alias_list.items[0].mac, "01-01-01-ab-ab-ab"));
