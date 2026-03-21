@@ -1,8 +1,8 @@
-![GitHub License](https://img.shields.io/github/license/rktr1998/zig-wol)
+![GitHub License](https://img.shields.io/github/license/rito1998/zig-wol)
 
 # Zig-wol
 
-A CLI utility for sending wake-on-lan magic packets to wake up a computer in a LAN given its MAC address. Find [zig-wol](https://github.com/rktr1998/zig-wol) also on [Codeberg](https://codeberg.org/rito/zig-wol).
+A CLI utility for sending wake-on-lan magic packets to wake up a computer in a LAN given its MAC address. Find [zig-wol](https://github.com/rito1998/zig-wol) also on [Codeberg](https://codeberg.org/rito/zig-wol).
 
 
 ## Features
@@ -12,24 +12,24 @@ A CLI utility for sending wake-on-lan magic packets to wake up a computer in a L
 
 ## Installation
 
-Pre-compiled binaries of [zig-wol](https://github.com/rktr1998/zig-wol) are distributed with [releases](https://github.com/rktr1998/zig-wol/releases). The installation scripts below download the latest release for your processor architecture and **install** the program at `C:\Users\%username%\.zig-wol` on Windows and `/home/$USER/.zig-wol` on Linux and macOS. To **uninstall** zig-wol, simply delete this folder.
+Pre-compiled binaries of [zig-wol](https://github.com/rito1998/zig-wol) are distributed with [releases](https://github.com/rito1998/zig-wol/releases). The installation scripts below download the latest release for your processor architecture and **install** the program at `C:\Users\%username%\.zig-wol` on Windows and `/home/$USER/.zig-wol` on Linux and macOS. To **uninstall** zig-wol, simply delete this folder.
 
 ### Windows
 
 ```pwsh
-Invoke-RestMethod "https://raw.githubusercontent.com/rktr1998/zig-wol/refs/heads/main/install/install-latest-on-windows.ps1" | Invoke-Expression
+Invoke-RestMethod "https://raw.githubusercontent.com/rito1998/zig-wol/refs/heads/main/install/install-latest-on-windows.ps1" | Invoke-Expression
 ```
 
 ### Linux
 
 ```sh
-bash <(curl -sSL https://raw.githubusercontent.com/rktr1998/zig-wol/refs/heads/main/install/install-latest-on-linux.sh)
+bash <(curl -sSL https://raw.githubusercontent.com/rito1998/zig-wol/refs/heads/main/install/install-latest-on-linux.sh)
 ```
 
 ### macOS
 
 ```sh
-bash <(curl -sSL https://raw.githubusercontent.com/rktr1998/zig-wol/refs/heads/main/install/install-latest-on-macos.sh)
+bash <(curl -sSL https://raw.githubusercontent.com/rito1998/zig-wol/refs/heads/main/install/install-latest-on-macos.sh)
 ```
 
 ## Usage
@@ -70,7 +70,7 @@ Run `zig-wol help` to display all subcommands and `zig-wol <subcommand> --help` 
 ### 1. Clone the Repository
 
 ```sh
-git clone https://github.com/rktr1998/zig-wol.git
+git clone https://github.com/rito1998/zig-wol.git
 cd zig-wol
 ```
 
@@ -87,7 +87,7 @@ This command compiles the source code and places the executable in the `zig-out/
 It is possible to use the wake-on-lan functionality of this project as a library.
 
 ```sh
-zig fetch --save git+https://github.com/rktr1998/zig-wol
+zig fetch --save git+https://github.com/rito1998/zig-wol
 ```
 
 Add the wol module from the fetched dependency in `build.zig`.
@@ -186,10 +186,10 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## Star History
 
-<a href="https://www.star-history.com/?repos=rktr1998%2Fzig-wol&type=date&legend=top-left">
+<a href="https://www.star-history.com/?repos=rito1998%2Fzig-wol&type=date&legend=top-left">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/image?repos=rktr1998/zig-wol&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/image?repos=rktr1998/zig-wol&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/image?repos=rktr1998/zig-wol&type=date&legend=top-left" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/image?repos=rito1998/zig-wol&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/image?repos=rito1998/zig-wol&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/image?repos=rito1998/zig-wol&type=date&legend=top-left" />
  </picture>
 </a>

@@ -8,7 +8,7 @@
             .hash = "clap-0.11.0-oBajBxToAQBCuP2IJxUwO2-coRk96cBGDrJezaNZjsQN",
         },
         .eui = .{
-            .url = "git+https://github.com/rktr1998/zig-eui#c8939c54d2d4e3319c8b720d4cb90470b2322204",
+            .url = "git+https://github.com/rito1998/zig-eui#c8939c54d2d4e3319c8b720d4cb90470b2322204",
             .hash = "eui-0.1.0--PejydknAAD2KJscHXtED07E4lNpxKi9lJK40-Q30HW3",
         },
     },
