@@ -40,23 +40,16 @@ pub fn broadcastMagicPacket(io: Io, mac: []const u8, broadcast: ?[]const u8, cou
     const socket = Io.net.IpAddress.bind(
         &any_addr,
         io,
-        .{ .mode = .dgram, .protocol = .udp },
+        .{
+            .mode = .dgram,
+            .protocol = .udp,
+            //.allow_broadcast = true,
+        },
     ) catch |err| {
         log.err("Failed to bind UDP socket: {}", .{err});
         return err;
     };
     defer socket.close(io);
-
-    const option_value: u32 = 1;
-    posix.setsockopt(
-        socket.handle,
-        posix.SOL.SOCKET,
-        posix.SO.BROADCAST,
-        std.mem.asBytes(&option_value),
-    ) catch |err| {
-        log.err("Failed to set socket option to enable broadcast: {}", .{err});
-        return err;
-    };
 
     // Send the magic packet
     for (0..actual_count) |_| {
@@ -156,26 +149,19 @@ test "isMagicPacket (invalid - broken repetition)" {
 
 /// Never returns. Listens for magic packets and relays them to the specified address and port.
 pub fn relayBegin(io: Io, listen_addr: Io.net.IpAddress, relay_addr: Io.net.IpAddress) !void {
-    const socket = Io.net.IpAddress.bind(&listen_addr, io, .{
-        .mode = .dgram,
-        .protocol = .udp,
-    }) catch |err| {
+    const socket = Io.net.IpAddress.bind(
+        &listen_addr,
+        io,
+        .{
+            .mode = .dgram,
+            .protocol = .udp,
+            //.allow_broadcast = true,
+        },
+    ) catch |err| {
         log.err("Failed to bind UDP socket to {f}: {}", .{ listen_addr.ip4, err });
         return err;
     };
     defer socket.close(io);
-
-    // Enable socket broadcast (setting SO_BROADCAST to anything other than empty string enables broadcast)
-    const option_value: u32 = 1;
-    posix.setsockopt(
-        socket.handle,
-        posix.SOL.SOCKET,
-        posix.SO.BROADCAST,
-        std.mem.asBytes(&option_value),
-    ) catch |err| {
-        log.err("Failed to set socket option to enable broadcast: {}", .{err});
-        return err;
-    };
 
     log.info("Listening for WOL packets on {f}, relaying to {f}...", .{ listen_addr.ip4, relay_addr.ip4 });
     var buf: [102]u8 = undefined;
