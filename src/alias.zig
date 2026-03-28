@@ -1,6 +1,7 @@
 const std = @import("std");
 const testing = std.testing;
 const process = std.process;
+const debug = std.debug;
 const log = std.log;
 const Allocator = std.mem.Allocator;
 const Io = std.Io;
@@ -55,33 +56,25 @@ pub fn readAliasFile(allocator: Allocator, io: Io) ArrayList(Alias) {
         return example_alias_list;
     }
 
-    const file = Io.Dir.openFileAbsolute(io, file_path, .{ .mode = .read_only }) catch |err| {
-        log.err("Error opening alias file: {}", .{err});
+    const file_stats = Io.Dir.statFile(.cwd(), io, file_path, .{}) catch |err| {
+        log.err("Error getting alias file size: {}", .{err});
         process.exit(1);
     };
-    defer file.close(io);
 
-    const file_bytes = Io.Dir.readFileAlloc(.cwd(), io, file_path, allocator, .unlimited) catch |err| {
-        log.err("Error opening alias file: {}", .{err});
-        process.exit(1);
-    };
-    defer allocator.free(file_bytes);
-
-    // Allocate a new null-terminated slice
-    const file_source_nt = allocator.allocSentinel(u8, file_bytes.len, 0) catch |err| {
+    const buffer_nt: [:0]u8 = allocator.allocSentinel(u8, file_stats.size, 0) catch |err| {
         log.err("Error allocating memory for alias file: {}", .{err});
         process.exit(1);
     };
-    defer allocator.free(file_source_nt);
+    defer allocator.free(buffer_nt);
 
-    @memcpy(file_source_nt[0..file_bytes.len], file_bytes);
+    const slice_nt = Io.Dir.readFile(.cwd(), io, file_path, buffer_nt) catch |err| {
+        log.err("Error reading alias file: {}", .{err});
+        process.exit(1);
+    };
+    debug.assert(slice_nt.len == file_stats.size);
 
-    // Zon parsing
-    var diagnostic: std.zon.parse.Diagnostics = .{};
-    defer diagnostic.deinit(allocator);
-    const alias_list_slice = std.zon.parse.fromSliceAlloc([]Alias, allocator, file_source_nt, &diagnostic, .{}) catch |err| {
+    const alias_list_slice = std.zon.parse.fromSliceAlloc([]Alias, allocator, buffer_nt, null, .{}) catch |err| {
         log.err("Error parsing alias file: {}", .{err});
-        log.err("Zon parsing diagnostics:\n{f}", .{diagnostic});
         process.exit(1);
     };
 
@@ -95,9 +88,8 @@ test "readAliasFile" {
     var alias_list = readAliasFile(allocator, io);
     defer alias_list.deinit(allocator);
 
-    try testing.expect(alias_list.items.len >= 1);
-
-    log.info("First alias: {s}, {s}", .{ alias_list.items[0].name, alias_list.items[0].mac });
+    debug.print("Alias list length: {d}\n", .{alias_list.items.len});
+    debug.print("First alias: {s}, {s}\n", .{ alias_list.items[0].name, alias_list.items[0].mac });
 
     try testing.expect(std.mem.eql(u8, alias_list.items[0].name, "alias-example-unreachable"));
     try testing.expect(std.mem.eql(u8, alias_list.items[0].mac, "01-01-01-ab-ab-ab"));
@@ -164,7 +156,7 @@ test "getAliasFilePath" {
     const file_path = getAliasFilePath(allocator, io);
     defer allocator.free(file_path);
 
-    log.info("Alias file path: {s}\n", .{file_path});
+    debug.print("Alias file path: {s}\n", .{file_path});
 }
 
 /// Check if the zon alias file exists in the same directory as the executable.
