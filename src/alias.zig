@@ -88,9 +88,6 @@ test "readAliasFile" {
     var alias_list = readAliasFile(allocator, io);
     defer alias_list.deinit(allocator);
 
-    debug.print("Alias list length: {d}\n", .{alias_list.items.len});
-    debug.print("First alias: {s}, {s}\n", .{ alias_list.items[0].name, alias_list.items[0].mac });
-
     try testing.expect(std.mem.eql(u8, alias_list.items[0].name, "alias-example-unreachable"));
     try testing.expect(std.mem.eql(u8, alias_list.items[0].mac, "01-01-01-ab-ab-ab"));
 }
@@ -155,8 +152,6 @@ test "getAliasFilePath" {
 
     const file_path = getAliasFilePath(allocator, io);
     defer allocator.free(file_path);
-
-    debug.print("Alias file path: {s}\n", .{file_path});
 }
 
 /// Check if the zon alias file exists in the same directory as the executable.
