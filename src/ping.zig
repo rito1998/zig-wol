@@ -2,6 +2,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 const Allocator = std.mem.Allocator;
 const Io = std.Io;
+const log = std.log;
 const testing = std.testing;
 
 /// Pings an IP address with system's ping command, returns true if successful.
@@ -19,7 +20,7 @@ pub fn systemPingIpAddress(allocator: Allocator, io: Io, address: Io.net.IpAddre
         .ip6 => std.fmt.bufPrint(&buf, "{f}", .{address.ip6}) catch return Io.Cancelable.Canceled,
     };
 
-    //std.log.info("address_literal -> {s}", .{address_literal});
+    //log.info("address_literal -> {s}", .{address_literal});
 
     const args = switch (builtin.target.os.tag) {
         // On Windows, depend on PowerShell Test-NetConnection: it prints True to stdout if
@@ -74,41 +75,40 @@ test "systemPingFqdn" {
 }
 
 pub fn hostnameLookup(io: Io, fqdn: []const u8, result: *?Io.net.IpAddress) Io.Cancelable!void {
-    Io.net.HostName.validate(fqdn) catch |err| {
-        std.log.info("hostnameLookup: {s} -> {}", .{ fqdn, err });
+    const hostname = Io.net.HostName.init(fqdn) catch |err| {
+        log.err("hostnameLookup: {s} -> {}", .{ fqdn, err });
         result.* = null;
         return Io.Cancelable.Canceled;
     };
 
-    var buf_canonical_name: [255]u8 = undefined;
     var buf_lookup_result: [16]Io.net.HostName.LookupResult = undefined;
     var queue: Io.Queue(Io.net.HostName.LookupResult) = .init(&buf_lookup_result);
+    defer queue.close(io);
 
-    Io.net.HostName.lookup(
-        .{ .bytes = fqdn },
+    hostname.lookup(
         io,
         &queue,
-        .{ .canonical_name_buffer = &buf_canonical_name, .port = 0 },
+        .{ .port = 0 },
     ) catch |err| {
-        std.log.info("hostnameLookup: {s} -> {}", .{ fqdn, err });
+        log.err("hostnameLookup: {s} -> {}", .{ fqdn, err });
         result.* = null;
         return Io.Cancelable.Canceled;
     };
 
     const lookup_result = queue.getOne(io) catch |err| {
-        std.log.info("hostnameLookup: {s} -> {}", .{ fqdn, err });
+        log.err("hostnameLookup: {s} -> {}", .{ fqdn, err });
         result.* = null;
         return Io.Cancelable.Canceled;
     };
 
-    std.log.info("hostnameLookup: {s} -> {f}", .{ fqdn, lookup_result.address });
+    log.info("hostnameLookup: {s} -> {f}", .{ fqdn, lookup_result.address });
     result.* = lookup_result.address;
 }
 
 test "hostnameLookup localhost IPv6" {
     var result: ?Io.net.IpAddress = undefined;
     hostnameLookup(testing.io, "localhost", &result) catch |err| {
-        std.log.info("hostnameLookup failed: {}", .{err});
+        log.info("hostnameLookup failed: {}", .{err});
         return;
     };
 
