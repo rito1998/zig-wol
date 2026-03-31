@@ -1,4 +1,5 @@
 ![GitHub License](https://img.shields.io/github/license/rito1998/zig-wol)
+![GitHub License](https://img.shields.io/github/license/rito1998/zig-wol)
 
 # Zig-wol
 
@@ -18,17 +19,20 @@ Pre-compiled binaries of [zig-wol](https://github.com/rito1998/zig-wol) are dist
 
 ```pwsh
 Invoke-RestMethod "https://raw.githubusercontent.com/rito1998/zig-wol/refs/heads/main/install/install-latest-on-windows.ps1" | Invoke-Expression
+Invoke-RestMethod "https://raw.githubusercontent.com/rito1998/zig-wol/refs/heads/main/install/install-latest-on-windows.ps1" | Invoke-Expression
 ```
 
 ### Linux
 
 ```sh
 bash <(curl -sSL https://raw.githubusercontent.com/rito1998/zig-wol/refs/heads/main/install/install-latest-on-linux.sh)
+bash <(curl -sSL https://raw.githubusercontent.com/rito1998/zig-wol/refs/heads/main/install/install-latest-on-linux.sh)
 ```
 
 ### macOS
 
 ```sh
+bash <(curl -sSL https://raw.githubusercontent.com/rito1998/zig-wol/refs/heads/main/install/install-latest-on-macos.sh)
 bash <(curl -sSL https://raw.githubusercontent.com/rito1998/zig-wol/refs/heads/main/install/install-latest-on-macos.sh)
 ```
 
@@ -70,6 +74,7 @@ Run `zig-wol help` to display all subcommands and `zig-wol <subcommand> --help` 
 ### 1. Clone the Repository
 
 ```sh
+git clone https://github.com/rito1998/zig-wol.git
 git clone https://github.com/rito1998/zig-wol.git
 cd zig-wol
 ```
@@ -187,7 +192,11 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ## Star History
 
 <a href="https://www.star-history.com/?repos=rito1998%2Fzig-wol&type=date&legend=top-left">
+<a href="https://www.star-history.com/?repos=rito1998%2Fzig-wol&type=date&legend=top-left">
  <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/image?repos=rito1998/zig-wol&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/image?repos=rito1998/zig-wol&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/image?repos=rito1998/zig-wol&type=date&legend=top-left" />
    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/image?repos=rito1998/zig-wol&type=date&theme=dark&legend=top-left" />
    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/image?repos=rito1998/zig-wol&type=date&legend=top-left" />
    <img alt="Star History Chart" src="https://api.star-history.com/image?repos=rito1998/zig-wol&type=date&legend=top-left" />
