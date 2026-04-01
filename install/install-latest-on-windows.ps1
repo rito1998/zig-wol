@@ -1,4 +1,4 @@
-$repo = "rito1998/zig-wol"
+$repo = "rito1998/zwol"
 $apiUrl = "https://api.github.com/repos/$repo/releases/latest"
 
 $latestRelease = Invoke-RestMethod -Uri $apiUrl
@@ -13,11 +13,11 @@ switch ($env:PROCESSOR_ARCHITECTURE) {
     }
 }
 
-$assetName = "zig-wol-$arch-windows.tar.gz"
+$assetName = "zwol-$arch-windows.tar.gz"
 $downloadUrl = "https://github.com/$repo/releases/download/$latestTag/$assetName"
 
 $homeDir = [System.Environment]::GetFolderPath("UserProfile")
-$installDir = "$homeDir\.zig-wol"
+$installDir = "$homeDir\.zwol"
 $tempTarGz = "$installDir\$assetName"
 
 if (Test-Path $installDir) {
@@ -44,7 +44,7 @@ tar -xzf $tempTarGz -C $installDir
 Remove-Item $tempTarGz
 
 Write-Host "Installation completed! Files are in: $installDir"
-Write-Host "To use 'zig-wol', consider adding '$installDir' to your PATH."
+Write-Host "To use 'zwol', consider adding '$installDir' to your PATH."
 
 $response = Read-Host "Do you want to add $installDir to your PATH? (y/n)"
 if ($response -eq "y") {
@@ -57,5 +57,5 @@ if ($response -eq "y") {
         Write-Host "$installDir is already in PATH."
     }
 } else {
-    Write-Host "To use 'zig-wol', manually add '$installDir' to your PATH."
+    Write-Host "To use 'zwol', manually add '$installDir' to your PATH."
 }

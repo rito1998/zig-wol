@@ -35,13 +35,13 @@ jobs:
           for tgt in "${targets[@]}"; do
             zig build -Dtarget="$tgt" --release=safe --prefix "zig-out/$tgt"
             binpath="zig-out/$tgt/bin"
-            tar -czf "artifacts/zig-wol-${tgt}.tar.gz" -C "$binpath" .
+            tar -czf "artifacts/zwol-${tgt}.tar.gz" -C "$binpath" .
           done
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: zig-wol-artifacts
+          name: zwol-artifacts
           path: artifacts/*.tar.gz
 
   release:
@@ -52,7 +52,7 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: zig-wol-artifacts
+          name: zwol-artifacts
           path: artifacts
 
       - name: List downloaded artifacts

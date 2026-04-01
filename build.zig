@@ -27,7 +27,7 @@ pub fn build(b: *std.Build) void {
     // --------------------------- EXECUTABLE ---------------------------
     // Create, add and install the exe
     const exe = b.addExecutable(.{
-        .name = "zig-wol",
+        .name = "zwol",
         .root_module = b.createModule(.{
             .root_source_file = b.path("src/main.zig"),
             .target = target,

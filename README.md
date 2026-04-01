@@ -1,9 +1,8 @@
-![GitHub License](https://img.shields.io/github/license/rito1998/zig-wol)
+![GitHub License](https://img.shields.io/github/license/rito1998/zwol)
 
-# Zig-wol
+# zwol
 
-A CLI utility for sending wake-on-lan magic packets to wake up a computer in a LAN given its MAC address. Find [zig-wol](https://github.com/rito1998/zig-wol) also on [Codeberg](https://codeberg.org/rito/zig-wol).
-
+A CLI utility for sending wake-on-lan magic packets to wake up a computer in a LAN given its MAC address. Find [zwol](https://github.com/rito1998/zwol) also on [codeberg](https://codeberg.org/rito/zwol).
 
 ## Features
 
@@ -12,24 +11,24 @@ A CLI utility for sending wake-on-lan magic packets to wake up a computer in a L
 
 ## Installation
 
-Pre-compiled binaries of [zig-wol](https://github.com/rito1998/zig-wol) are distributed with [releases](https://github.com/rito1998/zig-wol/releases). The installation scripts below download the latest release for your processor architecture and **install** the program at `C:\Users\%username%\.zig-wol` on Windows and `/home/$USER/.zig-wol` on Linux and macOS. To **uninstall** zig-wol, simply delete this folder.
+Pre-compiled binaries of [zwol](https://github.com/rito1998/zwol) are distributed with [releases](https://github.com/rito1998/zwol/releases). The installation scripts below download the latest release for your processor architecture and **install** the program at `C:\Users\%username%\.zwol` on Windows and `/home/$USER/.zwol` on Linux and macOS. To **uninstall** zwol, simply delete this folder.
 
 ### Windows
 
 ```pwsh
-Invoke-RestMethod "https://raw.githubusercontent.com/rito1998/zig-wol/refs/heads/main/install/install-latest-on-windows.ps1" | Invoke-Expression
+irm "https://raw.githubusercontent.com/rito1998/zwol/refs/heads/main/install/install-latest-on-windows.ps1" | iex
 ```
 
 ### Linux
 
 ```sh
-bash <(curl -sSL https://raw.githubusercontent.com/rito1998/zig-wol/refs/heads/main/install/install-latest-on-linux.sh)
+bash <(curl -sSL https://raw.githubusercontent.com/rito1998/zwol/refs/heads/main/install/install-latest-on-linux.sh)
 ```
 
 ### macOS
 
 ```sh
-bash <(curl -sSL https://raw.githubusercontent.com/rito1998/zig-wol/refs/heads/main/install/install-latest-on-macos.sh)
+bash <(curl -sSL https://raw.githubusercontent.com/rito1998/zwol/refs/heads/main/install/install-latest-on-macos.sh)
 ```
 
 ## Usage
@@ -37,19 +36,19 @@ bash <(curl -sSL https://raw.githubusercontent.com/rito1998/zig-wol/refs/heads/m
 Wake a machine on the LAN by broadcasting a magic packet: replace `<MAC>` with the target MAC (e.g. `9A-63-A1-FF-8B-4C`).
 
 ```sh
-zig-wol wake <MAC>
+zwol wake <MAC>
 ```
 
 Create an alias for a MAC address, list all aliases, or remove one.
 
 ```sh
-zig-wol alias <NAME> <MAC> --broadcast <ADDR:PORT>   # create an alias and set its broadcast
-zig-wol wake <NAME>                             # wake a machine by alias
+zwol alias <NAME> <MAC> --broadcast <ADDR:PORT>   # create an alias and set its broadcast
+zwol wake <NAME>                             # wake a machine by alias
 ```
 
 The optional `--broadcast` (e.g. 192.168.0.255:9) is important if there are multiple network interfaces. Setting the correct subnet broadcast address ensures the OS chooses the right network interface. If not specified, 255.255.255.255:9 is used.
 
-Use `zig-wol ping` to ping all machines by their FQDNs (if defined on alias creation) and display the result.
+Use `zwol ping` to ping all machines by their FQDNs (if defined on alias creation) and display the result.
 
 ```sh
 🟢  office-server
@@ -59,7 +58,7 @@ Use `zig-wol ping` to ping all machines by their FQDNs (if defined on alias crea
 🔴  coffee-machine
 ```
 
-Run `zig-wol help` to display all subcommands and `zig-wol <subcommand> --help` to display specific options.
+Run `zwol help` to display all subcommands and `zwol <subcommand> --help` to display specific options.
 
 ## Build
 
@@ -70,8 +69,8 @@ Run `zig-wol help` to display all subcommands and `zig-wol <subcommand> --help` 
 ### 1. Clone the Repository
 
 ```sh
-git clone https://github.com/rito1998/zig-wol.git
-cd zig-wol
+git clone https://github.com/rito1998/zwol.git
+cd zwol
 ```
 
 ### 2. Build the Application
@@ -87,7 +86,7 @@ This command compiles the source code and places the executable in the `zig-out/
 It is possible to use the wake-on-lan functionality of this project as a library.
 
 ```sh
-zig fetch --save git+https://github.com/rito1998/zig-wol
+zig fetch --save git+https://github.com/rito1998/zwol
 ```
 
 Add the wol module from the fetched dependency in `build.zig`.
@@ -109,24 +108,24 @@ pub fn main(init: std.process.Init) !void {
 
 ## Remote wake-on-lan
 
-Use the subcommand **relay** to make zig-wol work as a beacon that listens on a port for inbound wake-on-lan magic packets, for example coming from a router, and relays them, usually to the LAN broadcast in order to wake devices.
+Use the subcommand **relay** to make zwol work as a beacon that listens on a port for inbound wake-on-lan magic packets, for example coming from a router, and relays them, usually to the LAN broadcast in order to wake devices.
 
 ```sh
-zig-wol relay 192.168.0.10:9999 192.168.0.255:9
+zwol relay 192.168.0.10:9999 192.168.0.255:9
 ```
 
-A realistic example usage, using the command above as a reference, is to have a home LAN comprised of one or more powerful machines that need to be woken remotely and an always-on low-power machine, like a Raspberry Pi, that runs the `zig-wol relay` repeater.
-Enable port-forwarding in the router settings to forward inbound traffic from some specific port of choice to 9999/udp of the Raspberry Pi, then zig-wol relay service relays the magic packets on the local subnet broadcast allowing to wake the other machines from outside the LAN, provided the router public address is known.
+A realistic example usage, using the command above as a reference, is to have a home LAN comprised of one or more powerful machines that need to be woken remotely and an always-on low-power machine, like a Raspberry Pi, that runs the `zwol relay` repeater.
+Enable port-forwarding in the router settings to forward inbound traffic from some specific port of choice to 9999/udp of the Raspberry Pi, then zwol relay service relays the magic packets on the local subnet broadcast allowing to wake the other machines from outside the LAN, provided the router public address is known.
 
 ![relay-diagram](docs/assets/relay-diagram.png)
 
 ### As a service on Linux
 
-Ensure you have zig-wol and set net permissions to the binary.
+Ensure you have zwol and set net permissions to the binary.
 
 ```sh
-sudo chmod +x /home/USERNAME/.zig-wol/zig-wol
-sudo setcap 'cap_net_bind_service=+ep' /home/USERNAME/.zig-wol/zig-wol
+sudo chmod +x /home/USERNAME/.zwol/zwol
+sudo setcap 'cap_net_bind_service=+ep' /home/USERNAME/.zwol/zwol
 ```
 
 Firewall rules (based on the example above).
@@ -140,9 +139,9 @@ sudo ufw reload
 Create the service file, set the USERNAME and addresses accordingly.
 
 ```sh
-sudo tee /etc/systemd/system/zig-wol.service > /dev/null <<EOF
+sudo tee /etc/systemd/system/zwol.service > /dev/null <<EOF
 [Unit]
-Description=zig-wol
+Description=zwol
 After=network-online.target
 Wants=network-online.target
 StartLimitBurst=5
@@ -153,9 +152,9 @@ Type=simple
 User=USERNAME
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 CapabilityBoundingSet=CAP_NET_BIND_SERVICE
-WorkingDirectory=/home/USERNAME/.zig-wol
+WorkingDirectory=/home/USERNAME/.zwol
 ExecStartPre=/bin/sleep 5
-ExecStart=/home/USERNAME/.zig-wol/zig-wol relay 192.168.0.10:9999 192.168.0.255:9
+ExecStart=/home/USERNAME/.zwol/zwol relay 192.168.0.10:9999 192.168.0.255:9
 Restart=on-failure
 RestartSec=10s
 
@@ -169,15 +168,15 @@ Reload, enable and start the service.
 
 ```sh
 sudo systemctl daemon-reload
-sudo systemctl enable zig-wol.service
-sudo systemctl start zig-wol.service
+sudo systemctl enable zwol.service
+sudo systemctl start zwol.service
 ```
 
 Monitor the service.
 
 ```sh
-sudo systemctl status zig-wol.service
-sudo journalctl -u zig-wol.service -f
+sudo systemctl status zwol.service
+sudo journalctl -u zwol.service -f
 ```
 
 ## License
@@ -186,10 +185,10 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## Star History
 
-<a href="https://www.star-history.com/?repos=rito1998%2Fzig-wol&type=date&legend=top-left">
+<a href="https://www.star-history.com/?repos=rito1998%2Fzwol&type=date&legend=top-left">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/image?repos=rito1998/zig-wol&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/image?repos=rito1998/zig-wol&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/image?repos=rito1998/zig-wol&type=date&legend=top-left" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/image?repos=rito1998/zwol&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/image?repos=rito1998/zwol&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/image?repos=rito1998/zwol&type=date&legend=top-left" />
  </picture>
 </a>

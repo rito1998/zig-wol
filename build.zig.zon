@@ -1,6 +1,6 @@
 .{
-    .name = .wol,
-    .fingerprint = 0x89efddc744af097,
+    .name = .zwol,
+    .fingerprint = 0xd219bb2ae5c4620c,
     .version = "0.7.0",
     .dependencies = .{
         .clap = .{
@@ -12,7 +12,7 @@
             .hash = "eui-0.1.0--PejydknAABOPVdr_NLff_ogB87HN9-ikvu4lFnqHERR",
         },
     },
-    .minimum_zig_version = "0.16.0-dev.3041+3dc5f1398",
+    .minimum_zig_version = "0.16.0-dev.3059+42e33db9d",
     .paths = .{
         "build.zig",
         "build.zig.zon",

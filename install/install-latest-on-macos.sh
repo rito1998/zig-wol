@@ -1,6 +1,6 @@
 #!/bin/bash
 
-repo="rito1998/zig-wol"
+repo="rito1998/zwol"
 apiUrl="https://api.github.com/repos/$repo/releases/latest"
 
 latestRelease=$(curl -s $apiUrl)
@@ -13,11 +13,11 @@ case "$arch" in
     *) echo "Unsupported architecture: $arch"; exit 1 ;;
 esac
 
-assetName="zig-wol-$arch-macos.tar.gz"
+assetName="zwol-$arch-macos.tar.gz"
 downloadUrl="https://github.com/$repo/releases/download/$latestTag/$assetName"
 
 homeDir=$HOME
-installDir="$homeDir/.zig-wol"
+installDir="$homeDir/.zwol"
 tempTar="$installDir/$assetName"
 
 if [ -d "$installDir" ]; then
@@ -58,14 +58,14 @@ if ! echo "$PATH" | grep -q "$installDir"; then
         echo "Adding $installDir to PATH..."
 
         if ! grep -q "$installDir" "$shellrc"; then
-            echo -e "\n# zig-wol" >> "$shellrc"
+            echo -e "\n# zwol" >> "$shellrc"
             echo "export PATH=\"$installDir:\$PATH\"" >> "$shellrc"
             echo "Added $installDir to PATH. Restart your terminal or run 'source $shellrc' to update your PATH."
         else
             echo "$installDir is already in $shellrc."
         fi
     else
-        echo "To use 'zig-wol', manually add '$installDir' to your PATH."
+        echo "To use 'zwol', manually add '$installDir' to your PATH."
     fi
 else
     echo "$installDir is already in PATH."

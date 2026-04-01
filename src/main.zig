@@ -98,7 +98,7 @@ fn subCommandWake(allocator: Allocator, io: Io, iter: *process.Args.Iterator, ma
     };
     defer res.deinit();
 
-    const help_message = "Provide a MAC or an alias name. Usage: zig-wol wake <MAC or ALIAS> [options]\n";
+    const help_message = "Provide a MAC or an alias name. Usage: zwol wake <MAC or ALIAS> [options]\n";
 
     if (res.args.help != 0)
         return try Io.File.stdout().writeStreamingAll(io, help_message);
@@ -156,7 +156,7 @@ fn subCommandPing(allocator: Allocator, io: Io, iter: *process.Args.Iterator, ma
     defer res.deinit();
 
     const help_message =
-        \\Ping all aliases. Usage: zig-wol ping [--forever] [--help]
+        \\Ping all aliases. Usage: zwol ping [--forever] [--help]
         \\Make sure a FQDN/IP is set accordingly for each alias.
     ;
 
@@ -268,8 +268,8 @@ fn subCommandAlias(allocator: Allocator, io: Io, iter: *process.Args.Iterator, m
     };
     defer res.deinit();
 
-    const name = res.positionals[0] orelse return log.err("Provide name and MAC for the new alias. Usage: zig-wol alias <NAME> <MAC>", .{});
-    const mac = res.positionals[1] orelse return log.err("Provide a MAC. Usage: zig-wol alias <NAME> <MAC>", .{});
+    const name = res.positionals[0] orelse return log.err("Provide name and MAC for the new alias. Usage: zwol alias <NAME> <MAC>", .{});
+    const mac = res.positionals[1] orelse return log.err("Provide a MAC. Usage: zwol alias <NAME> <MAC>", .{});
     _ = Eui48.fromLiteral(mac) catch |err| {
         return log.err("Invalid MAC: {}", .{err});
     };
@@ -340,8 +340,8 @@ fn subCommandRemove(allocator: Allocator, io: Io, iter: *process.Args.Iterator, 
     }
 
     const help_message =
-        \\Provide an alias name to remove. Usage: zig-wol remove <NAME>
-        \\To remove all aliases: zig-wol remove --all
+        \\Provide an alias name to remove. Usage: zwol remove <NAME>
+        \\To remove all aliases: zwol remove --all
     ;
 
     if (res.args.help != 0)
@@ -423,13 +423,13 @@ fn subCommandRelay(allocator: Allocator, io: Io, iter: *process.Args.Iterator, m
 
     const help_message =
         \\Relay mode: listen for Wake-on-LAN packets and forward them.
-        \\Usage: zig-wol relay <LISTEN_ADDR> <RELAY_ADDR> [--help]
+        \\Usage: zwol relay <LISTEN_ADDR> <RELAY_ADDR> [--help]
         \\
         \\Options:
         \\  --help            Display this help and exit.
         \\
         \\Example:
-        \\  zig-wol relay 192.168.0.10:9999 192.168.0.255:9
+        \\  zwol relay 192.168.0.10:9999 192.168.0.255:9
         \\
     ;
 
@@ -467,7 +467,7 @@ fn subCommandVersion(io: Io) !void {
 
 fn subCommandHelp(io: Io) !void {
     const message =
-        \\Usage: zig-wol <command> [options]
+        \\Usage: zwol <command> [options]
         \\Commands:
         \\  wake      Wake up a device by its MAC.
         \\  ping      Ping all aliases.
@@ -478,7 +478,7 @@ fn subCommandHelp(io: Io) !void {
         \\  version   Display the version of the program.
         \\  help      Display help for the program or a specific command.
         \\
-        \\Run 'zig-wol <command> --help' for more information on a specific command.
+        \\Run 'zwol <command> --help' for more information on a specific command.
         \\
     ;
     try Io.File.stdout().writeStreamingAll(io, message);
