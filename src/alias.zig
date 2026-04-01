@@ -22,20 +22,20 @@ fn getExampleAliasList(allocator: Allocator) ArrayList(Alias) {
     };
 
     alias_list.append(allocator, Alias{
-        .name = "alias-example-unreachable",
-        .mac = "01-01-01-ab-ab-ab",
+        .name = "home-server",
+        .mac = "11-11-11-ab-ab-ab",
         .broadcast = "255.255.255.255:9",
-        .fqdn = "alias-example.unreachable-by-ping",
+        .fqdn = "192.168.0.1",
     }) catch {
         log.err("Error appending to alias list", .{});
         process.exit(1);
     };
 
     alias_list.append(allocator, Alias{
-        .name = "alias-example-localhost",
-        .mac = "00-00-00-00-00-00",
-        .broadcast = "255.255.255.255:9",
-        .fqdn = "localhost",
+        .name = "workstation",
+        .mac = "22-22-22-cd-cd-cd",
+        .broadcast = "192.168.0.255:9",
+        .fqdn = "workstation.home",
     }) catch {
         log.err("Error appending to alias list", .{});
         process.exit(1);
@@ -88,8 +88,9 @@ test readAliasFile {
     var alias_list = readAliasFile(allocator, io);
     defer alias_list.deinit(allocator);
 
-    try testing.expect(std.mem.eql(u8, alias_list.items[0].name, "alias-example-unreachable"));
-    try testing.expect(std.mem.eql(u8, alias_list.items[0].mac, "01-01-01-ab-ab-ab"));
+    try testing.expect(std.mem.eql(u8, alias_list.items[0].name, "home-server"));
+    try testing.expect(std.mem.eql(u8, alias_list.items[0].mac, "11-11-11-ab-ab-ab"));
+    try testing.expect(std.mem.eql(u8, alias_list.items[0].fqdn, "192.168.0.1"));
 }
 
 /// Write the alias file in the same directory as the executable. Overwrites if it already exists.
