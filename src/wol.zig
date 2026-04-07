@@ -1,7 +1,6 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const Io = std.Io;
-const posix = std.posix;
 const log = std.log;
 const testing = std.testing;
 pub const Eui48 = @import("eui").Eui48;

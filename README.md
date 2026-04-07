@@ -64,7 +64,7 @@ Run `zwol help` to display all subcommands and `zwol <subcommand> --help` to dis
 
 ### Prerequisites
 
-- [Zig (v0.16)](https://ziglang.org/download/) installed on your system.
+- [Zig](https://ziglang.org/download/)
 
 ### 1. Clone the Repository
 

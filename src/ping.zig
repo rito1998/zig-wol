@@ -2,11 +2,12 @@ const std = @import("std");
 const builtin = @import("builtin");
 const Allocator = std.mem.Allocator;
 const Io = std.Io;
+const IpAddress = Io.net.IpAddress;
 const log = std.log;
 const testing = std.testing;
 
 /// Pings an IP address with system's ping command, returns true if successful.
-pub fn systemPingIpAddress(allocator: Allocator, io: Io, address: Io.net.IpAddress, result: *bool) Io.Cancelable!void {
+pub fn systemPingIpAddress(allocator: Allocator, io: Io, address: IpAddress, result: *bool) Io.Cancelable!void {
     var buf: [255]u8 = undefined;
     const address_literal = switch (address) {
         .ip4 => blk: {
@@ -44,7 +45,7 @@ pub fn systemPingIpAddress(allocator: Allocator, io: Io, address: Io.net.IpAddre
 
 /// Resolves a FQDN and pings it with system ping utility.
 pub fn systemPingFqdn(allocator: Allocator, io: Io, fqdn: []const u8, result: *bool) Io.Cancelable!void {
-    var address: ?Io.net.IpAddress = undefined;
+    var address: ?IpAddress = undefined;
     hostnameLookup(io, fqdn, &address) catch return Io.Cancelable.Canceled;
     if (address) |addr| {
         systemPingIpAddress(allocator, io, addr, result) catch return Io.Cancelable.Canceled;
@@ -74,7 +75,7 @@ test systemPingFqdn {
     );
 }
 
-pub fn hostnameLookup(io: Io, fqdn: []const u8, result: *?Io.net.IpAddress) Io.Cancelable!void {
+pub fn hostnameLookup(io: Io, fqdn: []const u8, result: *?IpAddress) Io.Cancelable!void {
     const hostname = Io.net.HostName.init(fqdn) catch |err| {
         log.err("hostnameLookup: {s} -> {}", .{ fqdn, err });
         result.* = null;
@@ -106,7 +107,7 @@ pub fn hostnameLookup(io: Io, fqdn: []const u8, result: *?Io.net.IpAddress) Io.C
 }
 
 test hostnameLookup {
-    var result: ?Io.net.IpAddress = undefined;
+    var result: ?IpAddress = undefined;
     hostnameLookup(testing.io, "localhost", &result) catch |err| {
         log.info("hostnameLookup failed: {}", .{err});
         return;
@@ -115,7 +116,7 @@ test hostnameLookup {
     switch (result.?) {
         .ip4 => return error.SkipZigTest,
         .ip6 => {
-            const expected_ip = Io.net.IpAddress.parseLiteral("[::1]") catch unreachable;
+            const expected_ip = IpAddress.parseLiteral("[::1]") catch unreachable;
             try testing.expect(std.mem.eql(u8, &result.?.ip6.bytes, &expected_ip.ip6.bytes));
         },
     }
