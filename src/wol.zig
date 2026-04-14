@@ -1,9 +1,10 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const Io = std.Io;
+pub const Eui48 = @import("eui").Eui48;
 const log = std.log;
 const testing = std.testing;
-pub const Eui48 = @import("eui").Eui48;
+const Io = std.Io;
+const IpAddress = Io.net.IpAddress;
 
 pub fn generateMagicPacket(mac_bytes: [6]u8) [102]u8 {
     var packet: [102]u8 = undefined;
@@ -18,7 +19,7 @@ pub fn generateMagicPacket(mac_bytes: [6]u8) [102]u8 {
 /// The broadcast address is expected as literal address:port, e.g. "255.255.255.255:9".
 pub fn broadcastMagicPacket(io: Io, mac: []const u8, broadcast: ?[]const u8, count: ?u8) !void {
     // Defaults
-    var actual_broadcast = try Io.net.IpAddress.parseLiteral(broadcast orelse "255.255.255.255:9");
+    var actual_broadcast = try IpAddress.parseLiteral(broadcast orelse "255.255.255.255:9");
     if (actual_broadcast.getPort() == 0) {
         log.warn("Provided broadcast address {f} has no port specified, defaulting to port 9.", .{actual_broadcast});
         actual_broadcast.setPort(9);
@@ -32,11 +33,11 @@ pub fn broadcastMagicPacket(io: Io, mac: []const u8, broadcast: ?[]const u8, cou
     const magic_packet = generateMagicPacket(eui48.bytes);
 
     // Create a UDP socket
-    const any_addr = Io.net.IpAddress.parse("0.0.0.0", 0) catch |err| {
+    const any_addr = IpAddress.parse("0.0.0.0", 0) catch |err| {
         log.err("Failed to parse address: {}", .{err});
         return error.InvalidAddress;
     };
-    const socket = Io.net.IpAddress.bind(
+    const socket = IpAddress.bind(
         &any_addr,
         io,
         .{
@@ -143,8 +144,8 @@ test isMagicPacket {
 }
 
 /// Never returns. Listens for magic packets and relays them to the specified address and port.
-pub fn relayBegin(io: Io, listen_addr: Io.net.IpAddress, relay_addr: Io.net.IpAddress) !void {
-    const socket = Io.net.IpAddress.bind(
+pub fn relayBegin(io: Io, listen_addr: IpAddress, relay_addr: IpAddress) !void {
+    const socket = IpAddress.bind(
         &listen_addr,
         io,
         .{

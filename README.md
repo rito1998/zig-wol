@@ -92,17 +92,18 @@ zig fetch --save git+https://github.com/rito1998/zwol
 Add the wol module from the fetched dependency in `build.zig`.
 
 ```zig
-const wol_module = b.dependency("wol", .{}).module("wol");
+const wol_module = b.dependency("zwol", .{}).module("wol");
 exe.root_module.addImport("wol", wol_module); // e.g. add it to an exe root module
 ```
 
 Import the module in `main.zig` and broadcast a magic packet.
 
 ```zig
+const std = @import("std");
 const wol = @import("wol");
 
 pub fn main(init: std.process.Init) !void {
-    try wol.broadcastMagicPacket(init.io, "11-22-33-44-55-66", 10, "255.255.255.255:9", 1);
+    try wol.broadcastMagicPacket(init.io, "11-22-33-44-55-66", "255.255.255.255:9", 1);
 }
 ```
 
